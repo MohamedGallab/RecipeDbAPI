@@ -1,26 +1,44 @@
 ## Db Schema
 Tables:
 - Recipe
-	- Guid Id (Pk)
-	- String Title
+
+
+	| Field Type | Field Name | Notes
+	| --- | --- | --- |
+	| Guid | Id | Primary Key |
+	| String | Title | |
 - User
-	- String Username (Pk)
-	- String Password
-	- String RefreshToken
-- Categories
-	- String Name (Pk)
+	| Field Type | Field Name | Notes
+	| --- | --- | --- |
+	| String | Username | Primary Key |
+	| String | Password | |
+	| String | RefreshToken | |
+- Category
+	| Field Type | Field Name | Notes
+	| --- | --- | --- |
+	| String | Name | Primary Key |
 - RecipeCategoryDictionary
-	- Guid RecipeId (Fk references Recipe.Id)(Pk)
-	- String CategoryName (Fk references Category.Name)(Pk)
+	| Field Type | Field Name | Notes
+	| --- | --- | --- |
+	| Guid | RecipeId | Composite Primary Key, Foreign references Recipe.Id |
+	| String | CategoryName | Composite Primary Key, Foreign references Category.Name |
 - Instruction
-	- String Step
-	- Guid RecipeId (Fk references Recipe.Id)
+	| Field Type | Field Name | Notes
+	| --- | --- | --- |
+	| String | Step | |
+	| Guid | RecipeId | Foreign references Recipe.Id |
 - Ingredient
-	- String Component
-	- Guid RecipeId (Fk references Recipe.Id)
+	| Field Type | Field Name | Notes
+	| --- | --- | --- |
+	| String | Component | |
+	| Guid | RecipeId | Foreign references Recipe.Id |
 
 
-Relations:
-- One recipe has many instructions
-- One recipe has many Iingredients
-- many to many relation between recipes and categories
+Relationships:
+
+| Type | Tables involved 
+| --- | --- |
+| One to Many | Recipe to instructions |
+| One to Many | Recipe to Ingredients |
+| Many to Many | Recipes to Categories | 
+
