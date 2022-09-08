@@ -1,10 +1,11 @@
+using FluentMigrator.Runner;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using RecipeDbApi;
+using RecipeDbApi.Migrations;
 using RecipeDbAPI.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -15,8 +16,17 @@ using System.Text.Json;
 var builder = WebApplication.CreateBuilder(args);
 
 // services
-builder.Services.AddDbContext<RecipeContext>(
-		options => options.UseSqlServer("name=ConnectionStrings:DefaultConnection"));
+builder.Services
+	.AddFluentMigratorCore()
+				.ConfigureRunner(rb => rb
+					// Add SQLite support to FluentMigrator
+					.AddSqlServer()
+					// Set the connection string
+					.WithGlobalConnectionString("Data Source=test.db")
+					// Define the assembly containing the migrations
+					.ScanIn(typeof(_0001_CreateDB).Assembly).For.Migrations())
+				// Enable logging to console in the FluentMigrator way
+				.AddLogging(lb => lb.AddFluentMigratorConsole());
 
 builder.Services.AddCors(options =>
 {
@@ -84,6 +94,16 @@ app.UseHttpsRedirection();
 app.UseCors("Cors Policy");
 app.UseAuthentication();
 app.UseAuthorization();
+
+// FluentMigrator
+using (var scope = app.Services.CreateScope())
+{
+	// Instantiate the runner
+	var runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
+
+	// Execute the migrations
+	runner.MigrateUp();
+}
 
 // load previous categories if exists
 string categoriesFile = "Categories.json";
