@@ -6,12 +6,12 @@ Tables:
 	| Field Type | Field Name | Notes
 	| --- | --- | --- |
 	| Guid | Id | Primary Key |
-	| String | Title | |
+	| String | Title | Not Null |
 - User
 	| Field Type | Field Name | Notes
 	| --- | --- | --- |
 	| String | Username | Primary Key |
-	| String | Password | |
+	| String | Password | Not Null |
 	| String | RefreshToken | |
 - Category
 	| Field Type | Field Name | Notes
@@ -25,12 +25,14 @@ Tables:
 - Instruction
 	| Field Type | Field Name | Notes
 	| --- | --- | --- |
-	| String | Step | |
+	| Guid | Id | Primary Key |
+	| String | Step | Not Null |
 	| Guid | RecipeId | Foreign references Recipe.Id |
 - Ingredient
 	| Field Type | Field Name | Notes
 	| --- | --- | --- |
-	| String | Component | |
+	| Guid | Id | Primary Key |
+	| String | Component | Not Null |
 	| Guid | RecipeId | Foreign references Recipe.Id |
 
 
