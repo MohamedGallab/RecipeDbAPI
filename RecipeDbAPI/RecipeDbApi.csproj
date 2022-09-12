@@ -12,8 +12,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DatabaseGeneric\RecipeDB.csproj" />
-    <ProjectReference Include="..\DatabaseSpecific\RecipeDBDBSpecific.csproj" />
+    <ProjectReference Include="..\DatabaseGeneric\RecipeORM.csproj" />
+    <ProjectReference Include="..\DatabaseSpecific\RecipeORMDBSpecific.csproj" />
   </ItemGroup>
 
 </Project>

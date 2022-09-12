@@ -1,14 +1,11 @@
-using FluentMigrator.Runner;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using RecipeDB.DatabaseSpecific;
-using RecipeDB.EntityClasses;
-using RecipeDB.HelperClasses;
-using RecipeDbApi.Migrations;
+using RecipeORM.DatabaseSpecific;
+using RecipeORM.EntityClasses;
+using RecipeORM.HelperClasses;
 using RecipeDbAPI.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -39,33 +36,34 @@ builder.Services.AddAuthentication(x =>
 {
 	x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
 	x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(o =>
-{
-	var Key = Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]);
-	o.SaveToken = true;
-	o.TokenValidationParameters = new TokenValidationParameters
+})
+	.AddJwtBearer(o =>
 	{
-		ValidateIssuer = false,
-		ValidateAudience = false,
-		ValidateLifetime = true,
-		ValidateIssuerSigningKey = true,
-		ValidIssuer = builder.Configuration["JWT:Issuer"],
-		ValidAudience = builder.Configuration["JWT:Audience"],
-		IssuerSigningKey = new SymmetricSecurityKey(Key),
-		ClockSkew = TimeSpan.Zero
-	};
-	o.Events = new JwtBearerEvents
-	{
-		OnAuthenticationFailed = context =>
+		var Key = Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]);
+		o.SaveToken = true;
+		o.TokenValidationParameters = new TokenValidationParameters
 		{
-			if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
+			ValidateIssuer = false,
+			ValidateAudience = false,
+			ValidateLifetime = true,
+			ValidateIssuerSigningKey = true,
+			ValidIssuer = builder.Configuration["JWT:Issuer"],
+			ValidAudience = builder.Configuration["JWT:Audience"],
+			IssuerSigningKey = new SymmetricSecurityKey(Key),
+			ClockSkew = TimeSpan.Zero
+		};
+		o.Events = new JwtBearerEvents
+		{
+			OnAuthenticationFailed = context =>
 			{
-				context.Response.Headers.Add("IS-TOKEN-EXPIRED", "true");
+				if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
+				{
+					context.Response.Headers.Add("IS-TOKEN-EXPIRED", "true");
+				}
+				return Task.CompletedTask;
 			}
-			return Task.CompletedTask;
-		}
-	};
-});
+		};
+	});
 
 builder.Services.AddAuthorization();
 
@@ -85,60 +83,6 @@ app.UseHttpsRedirection();
 app.UseCors("Cors Policy");
 app.UseAuthentication();
 app.UseAuthorization();
-
-// load previous categories if exists
-string categoriesFile = "Categories.json";
-string jsonCategoriesString;
-var categoriesList = new List<string>();
-
-if (File.Exists(categoriesFile))
-{
-	if (new FileInfo(categoriesFile).Length > 0)
-	{
-		jsonCategoriesString = await File.ReadAllTextAsync(categoriesFile);
-		categoriesList = JsonSerializer.Deserialize<List<string>>(jsonCategoriesString)!;
-	}
-}
-else
-{
-	File.Create(categoriesFile).Dispose();
-}
-
-// load previous recipes if exists
-string recipesFile = "Recipes.json";
-string jsonRecipesString;
-var recipesList = new List<Recipe>();
-
-if (File.Exists(recipesFile))
-{
-	if (new FileInfo(recipesFile).Length > 0)
-	{
-		jsonRecipesString = await File.ReadAllTextAsync(recipesFile);
-		recipesList = JsonSerializer.Deserialize<List<Recipe>>(jsonRecipesString)!;
-	}
-}
-else
-{
-	File.Create(recipesFile).Dispose();
-}
-
-// load previous Users if exists
-string usersFile = "Users.json";
-string jsonUsersString;
-var usersList = new List<User>();
-
-if (File.Exists(usersFile))
-{
-	if (new FileInfo(usersFile).Length > 0)
-	{
-		jsonUsersString = await File.ReadAllTextAsync(usersFile);
-		usersList = JsonSerializer.Deserialize<List<User>>(jsonUsersString)!;
-	}
-}
-else
-{
-	File.Create(usersFile).Dispose();
-}
 
 string GenerateRefreshToken()
 {
@@ -253,7 +197,7 @@ app.MapGet("/antiforgery/token", [Authorize] (IAntiforgery forgeryService, HttpC
 {
 	var tokens = forgeryService.GetAndStoreTokens(context);
 	context.Response.Cookies.Append("XSRF-TOKEN", tokens.RequestToken!,
-			new CookieOptions { Secure = true, HttpOnly = false, SameSite=SameSiteMode.None });
+			new CookieOptions { Secure = true, HttpOnly = false, SameSite = SameSiteMode.None });
 });
 
 app.MapPost("/refresh", async (JWToken jwt) =>
@@ -338,50 +282,69 @@ app.MapGet("/categories", [Authorize] async (HttpContext context, IAntiforgery f
 {
 	await forgeryService.ValidateRequestAsync(context);
 
-	using (DataAccessAdapter adapter = new DataAccessAdapter())
+	var categories = new EntityCollection<CategoryEntity>();
+	using (var adapter = new DataAccessAdapter())
 	{
-		var categories = new EntityCollection<CategoryEntity>();
 		adapter.FetchEntityCollection(categories, null);
-		return Results.Ok(categories);
 	}
+	return Results.Ok(categories.Select(x => x.Name).ToList());
 });
 
 app.MapPost("/categories", [Authorize] async (string category, HttpContext context, IAntiforgery forgeryService) =>
 {
 	await forgeryService.ValidateRequestAsync(context);
 
-	if (category == String.Empty || categoriesList.Contains(category))
+	var categoryEntity = new CategoryEntity(category);
+	try
+	{
+		using (DataAccessAdapter adapter = new())
+		{
+			var result = adapter.SaveEntity(categoryEntity);
+			if(result)
+			{
+				return Results.Created($"/categories/{category}", category);
+			}
+			else
+			{
+				return Results.BadRequest();
+			}
+		}
+	}
+	catch (Exception)
 	{
 		return Results.BadRequest();
 	}
-
-	categoriesList.Add(category);
-	categoriesList = categoriesList.OrderBy(o => o).ToList();
-
-	await SaveAsync();
-	return Results.Created($"/categories/{category}", category);
 });
 
 app.MapDelete("/categories/{category}", [Authorize] async (string category, HttpContext context, IAntiforgery forgeryService) =>
 {
 	await forgeryService.ValidateRequestAsync(context);
+
 	if (category == String.Empty)
 	{
 		return Results.BadRequest();
 	}
 
-	if (!categoriesList.Contains(category))
+	try
 	{
-		return Results.NotFound();
+		var categoryEntity = new CategoryEntity(category);
+		using (DataAccessAdapter adapter = new())
+		{
+			var result = adapter.DeleteEntity(categoryEntity);
+			if (result)
+			{
+				return Results.Ok(category);
+			}
+			else
+			{
+				return Results.NotFound();
+			}
+		}
 	}
-
-	foreach (Recipe recipe in recipesList)
+	catch (Exception)
 	{
-		recipe.Categories.Remove(category);
+		return Results.Problem();
 	}
-	categoriesList.Remove(category);
-	await SaveAsync();
-	return Results.Ok(category);
 });
 
 app.MapPut("/categories/{category}", [Authorize] async (string category, string editedCategory, HttpContext context, IAntiforgery forgeryService) =>
@@ -392,35 +355,28 @@ app.MapPut("/categories/{category}", [Authorize] async (string category, string 
 		return Results.BadRequest();
 	}
 
-	if (!categoriesList.Contains(category))
+	try
 	{
-		return Results.NotFound();
-	}
-
-	categoriesList.Remove(category);
-	categoriesList.Add(editedCategory);
-	categoriesList = categoriesList.OrderBy(o => o).ToList();
-
-	foreach (var recipe in recipesList)
-	{
-		if (recipe.Categories.Contains(category))
+		var categoryEntity = new CategoryEntity(category);
+		using (DataAccessAdapter adapter = new())
 		{
-			recipe.Categories.Remove(category);
-			recipe.Categories.Add(editedCategory);
+			adapter.FetchEntity(categoryEntity);
+			categoryEntity.Name = editedCategory;
+			var result = adapter.SaveEntity(categoryEntity);
+			if (result)
+			{
+				return Results.NoContent();
+			}
+			else
+			{
+				return Results.NotFound();
+			}
 		}
 	}
-
-	await SaveAsync();
-	return Results.NoContent();
+	catch (Exception)
+	{
+		return Results.Problem();
+	}
 });
-
-async Task SaveAsync()
-{
-	await Task.WhenAll(
-		File.WriteAllTextAsync(recipesFile, JsonSerializer.Serialize(recipesList, new JsonSerializerOptions { WriteIndented = true })),
-		File.WriteAllTextAsync(categoriesFile, JsonSerializer.Serialize(categoriesList, new JsonSerializerOptions { WriteIndented = true })),
-		File.WriteAllTextAsync(usersFile, JsonSerializer.Serialize(usersList, new JsonSerializerOptions { WriteIndented = true }))
-		);
-}
 
 app.Run();
