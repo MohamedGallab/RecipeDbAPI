@@ -25,12 +25,12 @@ public class _0001_CreateTables : AutoReversingMigration
 
 		Create.Table("Instruction")
 			.WithColumn("Id").AsGuid().PrimaryKey()
-			.WithColumn("Step").AsString().NotNullable()
+			.WithColumn("Text").AsString().NotNullable()
 			.WithColumn("RecipeId").AsGuid().ForeignKey("Recipe", "Id");
 
 		Create.Table("Ingredient")
 			.WithColumn("Id").AsGuid().PrimaryKey()
-			.WithColumn("Component").AsString().NotNullable()
+			.WithColumn("Name").AsString().NotNullable()
 			.WithColumn("RecipeId").AsGuid().ForeignKey("Recipe", "Id");
 	}
 }
