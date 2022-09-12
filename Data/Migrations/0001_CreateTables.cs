@@ -9,32 +9,28 @@ public class _0001_CreateTables : AutoReversingMigration
 	{
 		Create.Table("Recipe")
 			.WithColumn("Id").AsGuid().PrimaryKey()
-			.WithColumn("Title").AsString();
+			.WithColumn("Title").AsString().NotNullable();
 
 		Create.Table("Category")
 			.WithColumn("Name").AsString().PrimaryKey();
 
 		Create.Table("RecipeCategoryDictionary")
-			.WithColumn("RecipeId").AsGuid().ForeignKey("Recipe", "Id")
-			.WithColumn("CategoryName").AsString().ForeignKey("Category", "Name");
-
-		string[] x = { "RecipeId", "CategoryName" };
-
-		Create.PrimaryKey("PK_RecipeCategoryDictionary")
-			.OnTable("RecipeCategoryDictionary")
-			.Columns(x);
+			.WithColumn("RecipeId").AsGuid().PrimaryKey().ForeignKey("Recipe", "Id")
+			.WithColumn("CategoryName").AsString().PrimaryKey().ForeignKey("Category", "Name");
 
 		Create.Table("User")
 			.WithColumn("Username").AsString().PrimaryKey()
-			.WithColumn("Password").AsString()
+			.WithColumn("Password").AsString().NotNullable()
 			.WithColumn("RefreshToken").AsString();
 
 		Create.Table("Instruction")
-			.WithColumn("Step").AsString().PrimaryKey()
+			.WithColumn("Id").AsGuid().PrimaryKey()
+			.WithColumn("Step").AsString().NotNullable()
 			.WithColumn("RecipeId").AsGuid().ForeignKey("Recipe", "Id");
 
 		Create.Table("Ingredient")
-			.WithColumn("Component").AsString().PrimaryKey()
+			.WithColumn("Id").AsGuid().PrimaryKey()
+			.WithColumn("Component").AsString().NotNullable()
 			.WithColumn("RecipeId").AsGuid().ForeignKey("Recipe", "Id");
 	}
 }

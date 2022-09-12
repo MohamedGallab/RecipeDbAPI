@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using RecipeDB.DatabaseSpecific;
+using RecipeDB.EntityClasses;
+using RecipeDB.HelperClasses;
 using RecipeDbApi.Migrations;
 using RecipeDbAPI.Models;
 using System.IdentityModel.Tokens.Jwt;
@@ -16,18 +19,6 @@ using System.Text.Json;
 var builder = WebApplication.CreateBuilder(args);
 
 // services
-builder.Services
-	.AddFluentMigratorCore()
-				.ConfigureRunner(rb => rb
-					// Add SQLite support to FluentMigrator
-					.AddSqlServer()
-					// Set the connection string
-					.WithGlobalConnectionString("Data Source=test.db")
-					// Define the assembly containing the migrations
-					.ScanIn(typeof(_0001_CreateDB).Assembly).For.Migrations())
-				// Enable logging to console in the FluentMigrator way
-				.AddLogging(lb => lb.AddFluentMigratorConsole());
-
 builder.Services.AddCors(options =>
 {
 	options.AddPolicy("Cors Policy",
@@ -94,16 +85,6 @@ app.UseHttpsRedirection();
 app.UseCors("Cors Policy");
 app.UseAuthentication();
 app.UseAuthorization();
-
-// FluentMigrator
-using (var scope = app.Services.CreateScope())
-{
-	// Instantiate the runner
-	var runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
-
-	// Execute the migrations
-	runner.MigrateUp();
-}
 
 // load previous categories if exists
 string categoriesFile = "Categories.json";
@@ -356,12 +337,19 @@ app.MapPut("/recipes/{id}", [Authorize] async (Recipe editedRecipe, HttpContext 
 app.MapGet("/categories", [Authorize] async (HttpContext context, IAntiforgery forgeryService) =>
 {
 	await forgeryService.ValidateRequestAsync(context);
-	return Results.Ok(categoriesList);
+
+	using (DataAccessAdapter adapter = new DataAccessAdapter())
+	{
+		var categories = new EntityCollection<CategoryEntity>();
+		adapter.FetchEntityCollection(categories, null);
+		return Results.Ok(categories);
+	}
 });
 
 app.MapPost("/categories", [Authorize] async (string category, HttpContext context, IAntiforgery forgeryService) =>
 {
 	await forgeryService.ValidateRequestAsync(context);
+
 	if (category == String.Empty || categoriesList.Contains(category))
 	{
 		return Results.BadRequest();
