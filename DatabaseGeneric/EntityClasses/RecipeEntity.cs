@@ -10,13 +10,13 @@ using System.ComponentModel;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Xml.Serialization;
-using RecipeDB.HelperClasses;
-using RecipeDB.FactoryClasses;
-using RecipeDB.RelationClasses;
+using RecipeORM.HelperClasses;
+using RecipeORM.FactoryClasses;
+using RecipeORM.RelationClasses;
 
 using SD.LLBLGen.Pro.ORMSupportClasses;
 
-namespace RecipeDB.EntityClasses
+namespace RecipeORM.EntityClasses
 {
 	// __LLBLGENPRO_USER_CODE_REGION_START AdditionalNamespaces
 	// __LLBLGENPRO_USER_CODE_REGION_END
@@ -53,10 +53,10 @@ namespace RecipeDB.EntityClasses
 		{
 			public RecipeEntityStaticMetaData()
 			{
-				SetEntityCoreInfo("RecipeEntity", InheritanceHierarchyType.None, false, (int)RecipeDB.EntityType.RecipeEntity, typeof(RecipeEntity), typeof(RecipeEntityFactory), false);
-				AddNavigatorMetaData<RecipeEntity, EntityCollection<IngredientEntity>>("Ingredients", a => a._ingredients, (a, b) => a._ingredients = b, a => a.Ingredients, () => new RecipeRelations().IngredientEntityUsingRecipeId, typeof(IngredientEntity), (int)RecipeDB.EntityType.IngredientEntity);
-				AddNavigatorMetaData<RecipeEntity, EntityCollection<InstructionEntity>>("Instructions", a => a._instructions, (a, b) => a._instructions = b, a => a.Instructions, () => new RecipeRelations().InstructionEntityUsingRecipeId, typeof(InstructionEntity), (int)RecipeDB.EntityType.InstructionEntity);
-				AddNavigatorMetaData<RecipeEntity, EntityCollection<RecipeCategoryDictionaryEntity>>("RecipeCategoryDictionaries", a => a._recipeCategoryDictionaries, (a, b) => a._recipeCategoryDictionaries = b, a => a.RecipeCategoryDictionaries, () => new RecipeRelations().RecipeCategoryDictionaryEntityUsingRecipeId, typeof(RecipeCategoryDictionaryEntity), (int)RecipeDB.EntityType.RecipeCategoryDictionaryEntity);
+				SetEntityCoreInfo("RecipeEntity", InheritanceHierarchyType.None, false, (int)RecipeORM.EntityType.RecipeEntity, typeof(RecipeEntity), typeof(RecipeEntityFactory), false);
+				AddNavigatorMetaData<RecipeEntity, EntityCollection<IngredientEntity>>("Ingredients", a => a._ingredients, (a, b) => a._ingredients = b, a => a.Ingredients, () => new RecipeRelations().IngredientEntityUsingRecipeId, typeof(IngredientEntity), (int)RecipeORM.EntityType.IngredientEntity);
+				AddNavigatorMetaData<RecipeEntity, EntityCollection<InstructionEntity>>("Instructions", a => a._instructions, (a, b) => a._instructions = b, a => a.Instructions, () => new RecipeRelations().InstructionEntityUsingRecipeId, typeof(InstructionEntity), (int)RecipeORM.EntityType.InstructionEntity);
+				AddNavigatorMetaData<RecipeEntity, EntityCollection<RecipeCategoryDictionaryEntity>>("RecipeCategoryDictionaries", a => a._recipeCategoryDictionaries, (a, b) => a._recipeCategoryDictionaries = b, a => a.RecipeCategoryDictionaries, () => new RecipeRelations().RecipeCategoryDictionaryEntityUsingRecipeId, typeof(RecipeCategoryDictionaryEntity), (int)RecipeORM.EntityType.RecipeCategoryDictionaryEntity);
 			}
 		}
 
@@ -199,7 +199,7 @@ namespace RecipeDB.EntityClasses
 	}
 }
 
-namespace RecipeDB
+namespace RecipeORM
 {
 	public enum RecipeFieldIndex
 	{
@@ -212,7 +212,7 @@ namespace RecipeDB
 	}
 }
 
-namespace RecipeDB.RelationClasses
+namespace RecipeORM.RelationClasses
 {
 	/// <summary>Implements the relations factory for the entity: Recipe. </summary>
 	public partial class RecipeRelations: RelationFactory

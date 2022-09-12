@@ -10,13 +10,13 @@ using System.ComponentModel;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Xml.Serialization;
-using RecipeDB.HelperClasses;
-using RecipeDB.FactoryClasses;
-using RecipeDB.RelationClasses;
+using RecipeORM.HelperClasses;
+using RecipeORM.FactoryClasses;
+using RecipeORM.RelationClasses;
 
 using SD.LLBLGen.Pro.ORMSupportClasses;
 
-namespace RecipeDB.EntityClasses
+namespace RecipeORM.EntityClasses
 {
 	// __LLBLGENPRO_USER_CODE_REGION_START AdditionalNamespaces
 	// __LLBLGENPRO_USER_CODE_REGION_END
@@ -47,8 +47,8 @@ namespace RecipeDB.EntityClasses
 		{
 			public CategoryEntityStaticMetaData()
 			{
-				SetEntityCoreInfo("CategoryEntity", InheritanceHierarchyType.None, false, (int)RecipeDB.EntityType.CategoryEntity, typeof(CategoryEntity), typeof(CategoryEntityFactory), false);
-				AddNavigatorMetaData<CategoryEntity, EntityCollection<RecipeCategoryDictionaryEntity>>("RecipeCategoryDictionaries", a => a._recipeCategoryDictionaries, (a, b) => a._recipeCategoryDictionaries = b, a => a.RecipeCategoryDictionaries, () => new CategoryRelations().RecipeCategoryDictionaryEntityUsingCategoryName, typeof(RecipeCategoryDictionaryEntity), (int)RecipeDB.EntityType.RecipeCategoryDictionaryEntity);
+				SetEntityCoreInfo("CategoryEntity", InheritanceHierarchyType.None, false, (int)RecipeORM.EntityType.CategoryEntity, typeof(CategoryEntity), typeof(CategoryEntityFactory), false);
+				AddNavigatorMetaData<CategoryEntity, EntityCollection<RecipeCategoryDictionaryEntity>>("RecipeCategoryDictionaries", a => a._recipeCategoryDictionaries, (a, b) => a._recipeCategoryDictionaries = b, a => a.RecipeCategoryDictionaries, () => new CategoryRelations().RecipeCategoryDictionaryEntityUsingCategoryName, typeof(RecipeCategoryDictionaryEntity), (int)RecipeORM.EntityType.RecipeCategoryDictionaryEntity);
 			}
 		}
 
@@ -159,7 +159,7 @@ namespace RecipeDB.EntityClasses
 	}
 }
 
-namespace RecipeDB
+namespace RecipeORM
 {
 	public enum CategoryFieldIndex
 	{
@@ -170,7 +170,7 @@ namespace RecipeDB
 	}
 }
 
-namespace RecipeDB.RelationClasses
+namespace RecipeORM.RelationClasses
 {
 	/// <summary>Implements the relations factory for the entity: Category. </summary>
 	public partial class CategoryRelations: RelationFactory

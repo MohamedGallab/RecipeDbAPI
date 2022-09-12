@@ -10,10 +10,10 @@ using System.Linq;
 using System.Collections.Generic;
 using SD.LLBLGen.Pro.LinqSupportClasses;
 using SD.LLBLGen.Pro.ORMSupportClasses;
-using RecipeDB.EntityClasses;
-using RecipeDB.FactoryClasses;
+using RecipeORM.EntityClasses;
+using RecipeORM.FactoryClasses;
 
-namespace RecipeDB.Linq
+namespace RecipeORM.Linq
 {
 	/// <summary>Meta-data class for the construction of Linq queries which are to be executed using LLBLGen Pro code.</summary>
 	public partial class LinqMetaData: ILinqMetaData
@@ -42,19 +42,19 @@ namespace RecipeDB.Linq
 		/// <returns>the requested datasource</returns>
 		public IDataSource GetQueryableForEntity(int typeOfEntity)
 		{
-			switch((RecipeDB.EntityType)typeOfEntity)
+			switch((RecipeORM.EntityType)typeOfEntity)
 			{
-				case RecipeDB.EntityType.CategoryEntity:
+				case RecipeORM.EntityType.CategoryEntity:
 					return this.Category;
-				case RecipeDB.EntityType.IngredientEntity:
+				case RecipeORM.EntityType.IngredientEntity:
 					return this.Ingredient;
-				case RecipeDB.EntityType.InstructionEntity:
+				case RecipeORM.EntityType.InstructionEntity:
 					return this.Instruction;
-				case RecipeDB.EntityType.RecipeEntity:
+				case RecipeORM.EntityType.RecipeEntity:
 					return this.Recipe;
-				case RecipeDB.EntityType.RecipeCategoryDictionaryEntity:
+				case RecipeORM.EntityType.RecipeCategoryDictionaryEntity:
 					return this.RecipeCategoryDictionary;
-				case RecipeDB.EntityType.UserEntity:
+				case RecipeORM.EntityType.UserEntity:
 					return this.User;
 				default:
 					return null;

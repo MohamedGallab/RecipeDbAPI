@@ -8,7 +8,7 @@
 using System;
 using SD.LLBLGen.Pro.ORMSupportClasses;
 
-namespace RecipeDB.HelperClasses
+namespace RecipeORM.HelperClasses
 {
 	/// <summary>Field Creation Class for entity CategoryEntity</summary>
 	public partial class CategoryFields
@@ -20,8 +20,10 @@ namespace RecipeDB.HelperClasses
 	/// <summary>Field Creation Class for entity IngredientEntity</summary>
 	public partial class IngredientFields
 	{
-		/// <summary>Creates a new IngredientEntity.Component field instance</summary>
-		public static EntityField2 Component { get { return ModelInfoProviderSingleton.GetInstance().CreateField2(IngredientFieldIndex.Component); }}
+		/// <summary>Creates a new IngredientEntity.Id field instance</summary>
+		public static EntityField2 Id { get { return ModelInfoProviderSingleton.GetInstance().CreateField2(IngredientFieldIndex.Id); }}
+		/// <summary>Creates a new IngredientEntity.Name field instance</summary>
+		public static EntityField2 Name { get { return ModelInfoProviderSingleton.GetInstance().CreateField2(IngredientFieldIndex.Name); }}
 		/// <summary>Creates a new IngredientEntity.RecipeId field instance</summary>
 		public static EntityField2 RecipeId { get { return ModelInfoProviderSingleton.GetInstance().CreateField2(IngredientFieldIndex.RecipeId); }}
 	}
@@ -29,10 +31,12 @@ namespace RecipeDB.HelperClasses
 	/// <summary>Field Creation Class for entity InstructionEntity</summary>
 	public partial class InstructionFields
 	{
+		/// <summary>Creates a new InstructionEntity.Id field instance</summary>
+		public static EntityField2 Id { get { return ModelInfoProviderSingleton.GetInstance().CreateField2(InstructionFieldIndex.Id); }}
 		/// <summary>Creates a new InstructionEntity.RecipeId field instance</summary>
 		public static EntityField2 RecipeId { get { return ModelInfoProviderSingleton.GetInstance().CreateField2(InstructionFieldIndex.RecipeId); }}
-		/// <summary>Creates a new InstructionEntity.Step field instance</summary>
-		public static EntityField2 Step { get { return ModelInfoProviderSingleton.GetInstance().CreateField2(InstructionFieldIndex.Step); }}
+		/// <summary>Creates a new InstructionEntity.Text field instance</summary>
+		public static EntityField2 Text { get { return ModelInfoProviderSingleton.GetInstance().CreateField2(InstructionFieldIndex.Text); }}
 	}
 
 	/// <summary>Field Creation Class for entity RecipeEntity</summary>

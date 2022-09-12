@@ -11,7 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using SD.LLBLGen.Pro.ORMSupportClasses;
 
-namespace RecipeDB.DatabaseSpecific
+namespace RecipeORM.DatabaseSpecific
 {
 	/// <summary>Class which contains the static logic to execute action stored procedures in the database.</summary>
 	public static partial class ActionProcedures

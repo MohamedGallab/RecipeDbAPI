@@ -10,13 +10,13 @@ using System.ComponentModel;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Xml.Serialization;
-using RecipeDB.HelperClasses;
-using RecipeDB.FactoryClasses;
-using RecipeDB.RelationClasses;
+using RecipeORM.HelperClasses;
+using RecipeORM.FactoryClasses;
+using RecipeORM.RelationClasses;
 
 using SD.LLBLGen.Pro.ORMSupportClasses;
 
-namespace RecipeDB.EntityClasses
+namespace RecipeORM.EntityClasses
 {
 	// __LLBLGENPRO_USER_CODE_REGION_START AdditionalNamespaces
 	// __LLBLGENPRO_USER_CODE_REGION_END
@@ -44,7 +44,7 @@ namespace RecipeDB.EntityClasses
 		{
 			public UserEntityStaticMetaData()
 			{
-				SetEntityCoreInfo("UserEntity", InheritanceHierarchyType.None, false, (int)RecipeDB.EntityType.UserEntity, typeof(UserEntity), typeof(UserEntityFactory), false);
+				SetEntityCoreInfo("UserEntity", InheritanceHierarchyType.None, false, (int)RecipeORM.EntityType.UserEntity, typeof(UserEntity), typeof(UserEntityFactory), false);
 			}
 		}
 
@@ -159,7 +159,7 @@ namespace RecipeDB.EntityClasses
 	}
 }
 
-namespace RecipeDB
+namespace RecipeORM
 {
 	public enum UserFieldIndex
 	{
@@ -174,7 +174,7 @@ namespace RecipeDB
 	}
 }
 
-namespace RecipeDB.RelationClasses
+namespace RecipeORM.RelationClasses
 {
 	/// <summary>Implements the relations factory for the entity: User. </summary>
 	public partial class UserRelations: RelationFactory

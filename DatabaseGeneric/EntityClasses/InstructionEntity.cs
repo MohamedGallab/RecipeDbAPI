@@ -10,13 +10,13 @@ using System.ComponentModel;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Xml.Serialization;
-using RecipeDB.HelperClasses;
-using RecipeDB.FactoryClasses;
-using RecipeDB.RelationClasses;
+using RecipeORM.HelperClasses;
+using RecipeORM.FactoryClasses;
+using RecipeORM.RelationClasses;
 
 using SD.LLBLGen.Pro.ORMSupportClasses;
 
-namespace RecipeDB.EntityClasses
+namespace RecipeORM.EntityClasses
 {
 	// __LLBLGENPRO_USER_CODE_REGION_START AdditionalNamespaces
 	// __LLBLGENPRO_USER_CODE_REGION_END
@@ -47,8 +47,8 @@ namespace RecipeDB.EntityClasses
 		{
 			public InstructionEntityStaticMetaData()
 			{
-				SetEntityCoreInfo("InstructionEntity", InheritanceHierarchyType.None, false, (int)RecipeDB.EntityType.InstructionEntity, typeof(InstructionEntity), typeof(InstructionEntityFactory), false);
-				AddNavigatorMetaData<InstructionEntity, RecipeEntity>("Recipe", "Instructions", (a, b) => a._recipe = b, a => a._recipe, (a, b) => a.Recipe = b, RecipeDB.RelationClasses.StaticInstructionRelations.RecipeEntityUsingRecipeIdStatic, ()=>new InstructionRelations().RecipeEntityUsingRecipeId, null, new int[] { (int)InstructionFieldIndex.RecipeId }, null, true, (int)RecipeDB.EntityType.RecipeEntity);
+				SetEntityCoreInfo("InstructionEntity", InheritanceHierarchyType.None, false, (int)RecipeORM.EntityType.InstructionEntity, typeof(InstructionEntity), typeof(InstructionEntityFactory), false);
+				AddNavigatorMetaData<InstructionEntity, RecipeEntity>("Recipe", "Instructions", (a, b) => a._recipe = b, a => a._recipe, (a, b) => a.Recipe = b, RecipeORM.RelationClasses.StaticInstructionRelations.RecipeEntityUsingRecipeIdStatic, ()=>new InstructionRelations().RecipeEntityUsingRecipeId, null, new int[] { (int)InstructionFieldIndex.RecipeId }, null, true, (int)RecipeORM.EntityType.RecipeEntity);
 			}
 		}
 
@@ -78,18 +78,18 @@ namespace RecipeDB.EntityClasses
 		}
 
 		/// <summary> CTor</summary>
-		/// <param name="step">PK value for Instruction which data should be fetched into this Instruction object</param>
-		public InstructionEntity(System.String step) : this(step, null)
+		/// <param name="id">PK value for Instruction which data should be fetched into this Instruction object</param>
+		public InstructionEntity(System.Guid id) : this(id, null)
 		{
 		}
 
 		/// <summary> CTor</summary>
-		/// <param name="step">PK value for Instruction which data should be fetched into this Instruction object</param>
+		/// <param name="id">PK value for Instruction which data should be fetched into this Instruction object</param>
 		/// <param name="validator">The custom validator object for this InstructionEntity</param>
-		public InstructionEntity(System.String step, IValidator validator)
+		public InstructionEntity(System.Guid id, IValidator validator)
 		{
 			InitClassEmpty(validator, null);
-			this.Step = step;
+			this.Id = id;
 		}
 
 		/// <summary>Private CTor for deserialization</summary>
@@ -141,6 +141,14 @@ namespace RecipeDB.EntityClasses
 		/// <returns>Ready to use IPrefetchPathElement2 implementation.</returns>
 		public static IPrefetchPathElement2 PrefetchPathRecipe { get { return _staticMetaData.GetPrefetchPathElement("Recipe", CommonEntityBase.CreateEntityCollection<RecipeEntity>()); } }
 
+		/// <summary>The Id property of the Entity Instruction<br/><br/></summary>
+		/// <remarks>Mapped on  table field: "Instruction"."Id".<br/>Table field type characteristics (type, precision, scale, length): UniqueIdentifier, 0, 0, 0.<br/>Table field behavior characteristics (is nullable, is PK, is identity): false, true, false</remarks>
+		public virtual System.Guid Id
+		{
+			get { return (System.Guid)GetValue((int)InstructionFieldIndex.Id, true); }
+			set	{ SetValue((int)InstructionFieldIndex.Id, value); }
+		}
+
 		/// <summary>The RecipeId property of the Entity Instruction<br/><br/></summary>
 		/// <remarks>Mapped on  table field: "Instruction"."RecipeId".<br/>Table field type characteristics (type, precision, scale, length): UniqueIdentifier, 0, 0, 0.<br/>Table field behavior characteristics (is nullable, is PK, is identity): false, false, false</remarks>
 		public virtual System.Guid RecipeId
@@ -149,12 +157,12 @@ namespace RecipeDB.EntityClasses
 			set	{ SetValue((int)InstructionFieldIndex.RecipeId, value); }
 		}
 
-		/// <summary>The Step property of the Entity Instruction<br/><br/></summary>
-		/// <remarks>Mapped on  table field: "Instruction"."Step".<br/>Table field type characteristics (type, precision, scale, length): NVarChar, 0, 0, 255.<br/>Table field behavior characteristics (is nullable, is PK, is identity): false, true, false</remarks>
-		public virtual System.String Step
+		/// <summary>The Text property of the Entity Instruction<br/><br/></summary>
+		/// <remarks>Mapped on  table field: "Instruction"."Text".<br/>Table field type characteristics (type, precision, scale, length): NVarChar, 0, 0, 255.<br/>Table field behavior characteristics (is nullable, is PK, is identity): false, false, false</remarks>
+		public virtual System.String Text
 		{
-			get { return (System.String)GetValue((int)InstructionFieldIndex.Step, true); }
-			set	{ SetValue((int)InstructionFieldIndex.Step, value); }
+			get { return (System.String)GetValue((int)InstructionFieldIndex.Text, true); }
+			set	{ SetValue((int)InstructionFieldIndex.Text, value); }
 		}
 
 		/// <summary>Gets / sets related entity of type 'RecipeEntity' which has to be set using a fetch action earlier. If no related entity is set for this property, null is returned..<br/><br/></summary>
@@ -171,20 +179,22 @@ namespace RecipeDB.EntityClasses
 	}
 }
 
-namespace RecipeDB
+namespace RecipeORM
 {
 	public enum InstructionFieldIndex
 	{
+		///<summary>Id. </summary>
+		Id,
 		///<summary>RecipeId. </summary>
 		RecipeId,
-		///<summary>Step. </summary>
-		Step,
+		///<summary>Text. </summary>
+		Text,
 		/// <summary></summary>
 		AmountOfFields
 	}
 }
 
-namespace RecipeDB.RelationClasses
+namespace RecipeORM.RelationClasses
 {
 	/// <summary>Implements the relations factory for the entity: Instruction. </summary>
 	public partial class InstructionRelations: RelationFactory

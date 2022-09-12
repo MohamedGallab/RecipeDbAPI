@@ -6,11 +6,11 @@
 // Templates vendor: Solutions Design.
 //////////////////////////////////////////////////////////////
 using System;
-using RecipeDB.FactoryClasses;
-using RecipeDB.RelationClasses;
+using RecipeORM.FactoryClasses;
+using RecipeORM.RelationClasses;
 using SD.LLBLGen.Pro.ORMSupportClasses;
 
-namespace RecipeDB.HelperClasses
+namespace RecipeORM.HelperClasses
 {
 	/// <summary>Singleton implementation of the ModelInfoProvider. This class is the singleton wrapper through which the actual instance is retrieved.</summary>
 	public static class ModelInfoProviderSingleton
@@ -61,7 +61,8 @@ namespace RecipeDB.HelperClasses
 		private void InitIngredientEntityInfo()
 		{
 			this.AddFieldIndexEnumForElementName(typeof(IngredientFieldIndex), "IngredientEntity");
-			this.AddElementFieldInfo("IngredientEntity", "Component", typeof(System.String), true, false, false, false,  (int)IngredientFieldIndex.Component, 255, 0, 0);
+			this.AddElementFieldInfo("IngredientEntity", "Id", typeof(System.Guid), true, false, false, false,  (int)IngredientFieldIndex.Id, 0, 0, 0);
+			this.AddElementFieldInfo("IngredientEntity", "Name", typeof(System.String), false, false, false, false,  (int)IngredientFieldIndex.Name, 255, 0, 0);
 			this.AddElementFieldInfo("IngredientEntity", "RecipeId", typeof(System.Guid), false, true, false, false,  (int)IngredientFieldIndex.RecipeId, 0, 0, 0);
 		}
 
@@ -69,8 +70,9 @@ namespace RecipeDB.HelperClasses
 		private void InitInstructionEntityInfo()
 		{
 			this.AddFieldIndexEnumForElementName(typeof(InstructionFieldIndex), "InstructionEntity");
+			this.AddElementFieldInfo("InstructionEntity", "Id", typeof(System.Guid), true, false, false, false,  (int)InstructionFieldIndex.Id, 0, 0, 0);
 			this.AddElementFieldInfo("InstructionEntity", "RecipeId", typeof(System.Guid), false, true, false, false,  (int)InstructionFieldIndex.RecipeId, 0, 0, 0);
-			this.AddElementFieldInfo("InstructionEntity", "Step", typeof(System.String), true, false, false, false,  (int)InstructionFieldIndex.Step, 255, 0, 0);
+			this.AddElementFieldInfo("InstructionEntity", "Text", typeof(System.String), false, false, false, false,  (int)InstructionFieldIndex.Text, 255, 0, 0);
 		}
 
 		/// <summary>Inits RecipeEntity's info objects</summary>

@@ -6,10 +6,10 @@
 // Templates vendor: Solutions Design.
 //////////////////////////////////////////////////////////////
 using System;
-using RecipeDB.HelperClasses;
+using RecipeORM.HelperClasses;
 using SD.LLBLGen.Pro.ORMSupportClasses;
 
-namespace RecipeDB.FactoryClasses
+namespace RecipeORM.FactoryClasses
 {
 	/// <summary>Factory class for IEntityField2 instances, used in IEntityFields2 instances. For backwards compatibility</summary>
 	public static partial class EntityFieldFactory

@@ -7,13 +7,13 @@
 ////////////////////////////////////////////////////////////// 
 using System;
 using System.Linq;
-using RecipeDB.EntityClasses;
-using RecipeDB.HelperClasses;
+using RecipeORM.EntityClasses;
+using RecipeORM.HelperClasses;
 using SD.LLBLGen.Pro.ORMSupportClasses;
 using SD.LLBLGen.Pro.QuerySpec.AdapterSpecific;
 using SD.LLBLGen.Pro.QuerySpec;
 
-namespace RecipeDB.FactoryClasses
+namespace RecipeORM.FactoryClasses
 {
 	/// <summary>Factory class to produce DynamicQuery instances and EntityQuery instances</summary>
 	public partial class QueryFactory : QueryFactoryBase2

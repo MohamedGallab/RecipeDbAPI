@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 using SD.LLBLGen.Pro.ORMSupportClasses;
 using SD.LLBLGen.Pro.QuerySpec.Adapter;
 
-namespace RecipeDB.DatabaseSpecific
+namespace RecipeORM.DatabaseSpecific
 {
 	/// <summary>Class which contains the static logic to execute retrieval stored procedures in the database.</summary>
 	public static partial class RetrievalProcedures

@@ -8,7 +8,7 @@
 using System;
 using SD.LLBLGen.Pro.ORMSupportClasses;
 
-namespace RecipeDB.DatabaseSpecific
+namespace RecipeORM.DatabaseSpecific
 {
 	/// <summary>Singleton implementation of the PersistenceInfoProvider. This class is the singleton wrapper through which the actual instance is retrieved.</summary>
 	internal static class PersistenceInfoProviderSingleton
@@ -54,17 +54,19 @@ namespace RecipeDB.DatabaseSpecific
 		/// <summary>Inits IngredientEntity's mappings</summary>
 		private void InitIngredientEntityMappings()
 		{
-			this.AddElementMapping("IngredientEntity", @"RecipeDB", @"dbo", "Ingredient", 2, 0);
-			this.AddElementFieldMapping("IngredientEntity", "Component", "Component", false, "NVarChar", 255, 0, 0, false, "", null, typeof(System.String), 0);
-			this.AddElementFieldMapping("IngredientEntity", "RecipeId", "RecipeId", false, "UniqueIdentifier", 0, 0, 0, false, "", null, typeof(System.Guid), 1);
+			this.AddElementMapping("IngredientEntity", @"RecipeDB", @"dbo", "Ingredient", 3, 0);
+			this.AddElementFieldMapping("IngredientEntity", "Id", "Id", false, "UniqueIdentifier", 0, 0, 0, false, "", null, typeof(System.Guid), 0);
+			this.AddElementFieldMapping("IngredientEntity", "Name", "Name", false, "NVarChar", 255, 0, 0, false, "", null, typeof(System.String), 1);
+			this.AddElementFieldMapping("IngredientEntity", "RecipeId", "RecipeId", false, "UniqueIdentifier", 0, 0, 0, false, "", null, typeof(System.Guid), 2);
 		}
 
 		/// <summary>Inits InstructionEntity's mappings</summary>
 		private void InitInstructionEntityMappings()
 		{
-			this.AddElementMapping("InstructionEntity", @"RecipeDB", @"dbo", "Instruction", 2, 0);
-			this.AddElementFieldMapping("InstructionEntity", "RecipeId", "RecipeId", false, "UniqueIdentifier", 0, 0, 0, false, "", null, typeof(System.Guid), 0);
-			this.AddElementFieldMapping("InstructionEntity", "Step", "Step", false, "NVarChar", 255, 0, 0, false, "", null, typeof(System.String), 1);
+			this.AddElementMapping("InstructionEntity", @"RecipeDB", @"dbo", "Instruction", 3, 0);
+			this.AddElementFieldMapping("InstructionEntity", "Id", "Id", false, "UniqueIdentifier", 0, 0, 0, false, "", null, typeof(System.Guid), 0);
+			this.AddElementFieldMapping("InstructionEntity", "RecipeId", "RecipeId", false, "UniqueIdentifier", 0, 0, 0, false, "", null, typeof(System.Guid), 1);
+			this.AddElementFieldMapping("InstructionEntity", "Text", "Text", false, "NVarChar", 255, 0, 0, false, "", null, typeof(System.String), 2);
 		}
 
 		/// <summary>Inits RecipeEntity's mappings</summary>

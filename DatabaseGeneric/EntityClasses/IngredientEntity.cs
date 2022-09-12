@@ -10,13 +10,13 @@ using System.ComponentModel;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Xml.Serialization;
-using RecipeDB.HelperClasses;
-using RecipeDB.FactoryClasses;
-using RecipeDB.RelationClasses;
+using RecipeORM.HelperClasses;
+using RecipeORM.FactoryClasses;
+using RecipeORM.RelationClasses;
 
 using SD.LLBLGen.Pro.ORMSupportClasses;
 
-namespace RecipeDB.EntityClasses
+namespace RecipeORM.EntityClasses
 {
 	// __LLBLGENPRO_USER_CODE_REGION_START AdditionalNamespaces
 	// __LLBLGENPRO_USER_CODE_REGION_END
@@ -47,8 +47,8 @@ namespace RecipeDB.EntityClasses
 		{
 			public IngredientEntityStaticMetaData()
 			{
-				SetEntityCoreInfo("IngredientEntity", InheritanceHierarchyType.None, false, (int)RecipeDB.EntityType.IngredientEntity, typeof(IngredientEntity), typeof(IngredientEntityFactory), false);
-				AddNavigatorMetaData<IngredientEntity, RecipeEntity>("Recipe", "Ingredients", (a, b) => a._recipe = b, a => a._recipe, (a, b) => a.Recipe = b, RecipeDB.RelationClasses.StaticIngredientRelations.RecipeEntityUsingRecipeIdStatic, ()=>new IngredientRelations().RecipeEntityUsingRecipeId, null, new int[] { (int)IngredientFieldIndex.RecipeId }, null, true, (int)RecipeDB.EntityType.RecipeEntity);
+				SetEntityCoreInfo("IngredientEntity", InheritanceHierarchyType.None, false, (int)RecipeORM.EntityType.IngredientEntity, typeof(IngredientEntity), typeof(IngredientEntityFactory), false);
+				AddNavigatorMetaData<IngredientEntity, RecipeEntity>("Recipe", "Ingredients", (a, b) => a._recipe = b, a => a._recipe, (a, b) => a.Recipe = b, RecipeORM.RelationClasses.StaticIngredientRelations.RecipeEntityUsingRecipeIdStatic, ()=>new IngredientRelations().RecipeEntityUsingRecipeId, null, new int[] { (int)IngredientFieldIndex.RecipeId }, null, true, (int)RecipeORM.EntityType.RecipeEntity);
 			}
 		}
 
@@ -78,18 +78,18 @@ namespace RecipeDB.EntityClasses
 		}
 
 		/// <summary> CTor</summary>
-		/// <param name="component">PK value for Ingredient which data should be fetched into this Ingredient object</param>
-		public IngredientEntity(System.String component) : this(component, null)
+		/// <param name="id">PK value for Ingredient which data should be fetched into this Ingredient object</param>
+		public IngredientEntity(System.Guid id) : this(id, null)
 		{
 		}
 
 		/// <summary> CTor</summary>
-		/// <param name="component">PK value for Ingredient which data should be fetched into this Ingredient object</param>
+		/// <param name="id">PK value for Ingredient which data should be fetched into this Ingredient object</param>
 		/// <param name="validator">The custom validator object for this IngredientEntity</param>
-		public IngredientEntity(System.String component, IValidator validator)
+		public IngredientEntity(System.Guid id, IValidator validator)
 		{
 			InitClassEmpty(validator, null);
-			this.Component = component;
+			this.Id = id;
 		}
 
 		/// <summary>Private CTor for deserialization</summary>
@@ -141,12 +141,20 @@ namespace RecipeDB.EntityClasses
 		/// <returns>Ready to use IPrefetchPathElement2 implementation.</returns>
 		public static IPrefetchPathElement2 PrefetchPathRecipe { get { return _staticMetaData.GetPrefetchPathElement("Recipe", CommonEntityBase.CreateEntityCollection<RecipeEntity>()); } }
 
-		/// <summary>The Component property of the Entity Ingredient<br/><br/></summary>
-		/// <remarks>Mapped on  table field: "Ingredient"."Component".<br/>Table field type characteristics (type, precision, scale, length): NVarChar, 0, 0, 255.<br/>Table field behavior characteristics (is nullable, is PK, is identity): false, true, false</remarks>
-		public virtual System.String Component
+		/// <summary>The Id property of the Entity Ingredient<br/><br/></summary>
+		/// <remarks>Mapped on  table field: "Ingredient"."Id".<br/>Table field type characteristics (type, precision, scale, length): UniqueIdentifier, 0, 0, 0.<br/>Table field behavior characteristics (is nullable, is PK, is identity): false, true, false</remarks>
+		public virtual System.Guid Id
 		{
-			get { return (System.String)GetValue((int)IngredientFieldIndex.Component, true); }
-			set	{ SetValue((int)IngredientFieldIndex.Component, value); }
+			get { return (System.Guid)GetValue((int)IngredientFieldIndex.Id, true); }
+			set	{ SetValue((int)IngredientFieldIndex.Id, value); }
+		}
+
+		/// <summary>The Name property of the Entity Ingredient<br/><br/></summary>
+		/// <remarks>Mapped on  table field: "Ingredient"."Name".<br/>Table field type characteristics (type, precision, scale, length): NVarChar, 0, 0, 255.<br/>Table field behavior characteristics (is nullable, is PK, is identity): false, false, false</remarks>
+		public virtual System.String Name
+		{
+			get { return (System.String)GetValue((int)IngredientFieldIndex.Name, true); }
+			set	{ SetValue((int)IngredientFieldIndex.Name, value); }
 		}
 
 		/// <summary>The RecipeId property of the Entity Ingredient<br/><br/></summary>
@@ -171,12 +179,14 @@ namespace RecipeDB.EntityClasses
 	}
 }
 
-namespace RecipeDB
+namespace RecipeORM
 {
 	public enum IngredientFieldIndex
 	{
-		///<summary>Component. </summary>
-		Component,
+		///<summary>Id. </summary>
+		Id,
+		///<summary>Name. </summary>
+		Name,
 		///<summary>RecipeId. </summary>
 		RecipeId,
 		/// <summary></summary>
@@ -184,7 +194,7 @@ namespace RecipeDB
 	}
 }
 
-namespace RecipeDB.RelationClasses
+namespace RecipeORM.RelationClasses
 {
 	/// <summary>Implements the relations factory for the entity: Ingredient. </summary>
 	public partial class IngredientRelations: RelationFactory

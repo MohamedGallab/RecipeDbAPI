@@ -6,12 +6,12 @@
 // Templates vendor: Solutions Design.
 //////////////////////////////////////////////////////////////
 using System;
-using RecipeDB.HelperClasses;
-using RecipeDB.FactoryClasses;
+using RecipeORM.HelperClasses;
+using RecipeORM.FactoryClasses;
 using SD.LLBLGen.Pro.ORMSupportClasses;
 using System.Runtime.Serialization;
 
-namespace RecipeDB.EntityClasses
+namespace RecipeORM.EntityClasses
 {
 	// __LLBLGENPRO_USER_CODE_REGION_START AdditionalNamespaces
 	// __LLBLGENPRO_USER_CODE_REGION_END
@@ -90,7 +90,7 @@ namespace RecipeDB.EntityClasses
 		/// <inheritdoc/>
 		protected override Type LLBLGenProEntityTypeEnumType
 		{
-			get { return typeof(RecipeDB.EntityType); }
+			get { return typeof(RecipeORM.EntityType); }
 		}
 
 		// __LLBLGENPRO_USER_CODE_REGION_START CustomEntityCode
