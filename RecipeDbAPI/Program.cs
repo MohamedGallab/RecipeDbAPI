@@ -12,6 +12,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -240,15 +241,70 @@ app.MapGet("/recipes/{id}", [Authorize] async (Guid id, HttpContext context, IAn
 app.MapPost("/recipes", [Authorize] async (Recipe recipe, HttpContext context, IAntiforgery forgeryService) =>
 {
 	await forgeryService.ValidateRequestAsync(context);
-	if (recipe.Title == String.Empty)
+
+	using (DataAccessAdapter adapter = new())
 	{
-		return Results.BadRequest();
+		adapter.StartTransaction(IsolationLevel.ReadCommitted, "Insert Recipe");
+		try
+		{
+			var recipeEntity = new RecipeEntity();
+			recipeEntity.Id = Guid.NewGuid();
+			recipeEntity.Title = recipe.Title;
+			if (!adapter.SaveEntity(recipeEntity))
+				throw new Exception();
+
+			// create instruction entities
+			foreach (var instruction in recipe.Instructions)
+			{
+				var instructionEntity = new InstructionEntity
+				{
+					Id = Guid.NewGuid(),
+					Text = instruction,
+					Recipe = recipeEntity
+				};
+				if (!adapter.SaveEntity(instructionEntity))
+					throw new Exception();
+			}
+
+			// create ingredient entities
+			foreach (var ingredient in recipe.Ingredients)
+			{
+				var ingredientEntity = new IngredientEntity
+				{
+					Id = Guid.NewGuid(),
+					Name = ingredient,
+					Recipe = recipeEntity
+				};
+				if (!adapter.SaveEntity(ingredientEntity))
+					throw new Exception();
+			}
+
+			// create category entities
+			foreach (var category in recipe.Categories)
+			{
+				var categoryEntity = new CategoryEntity(category);
+				if (!adapter.FetchEntity(categoryEntity))
+					throw new Exception();
+
+				var recipeCategoryDictionaryEntity = new RecipeCategoryDictionaryEntity()
+				{
+					Recipe = recipeEntity,
+					Category = categoryEntity
+				};
+				if (!adapter.SaveEntity(recipeCategoryDictionaryEntity))
+					throw new Exception();
+			}
+
+			adapter.Commit();
+			return Results.Created($"/recipes/{recipe.Id}", recipe);
+		}
+		catch (Exception)
+		{
+			// Rollback if anything goes wrong
+			adapter.Rollback();
+			return Results.BadRequest();
+		}
 	}
-	recipe.Id = Guid.NewGuid();
-	recipesList.Add(recipe);
-	recipesList = recipesList.OrderBy(o => o.Title).ToList();
-	await SaveAsync();
-	return Results.Created($"/recipes/{recipe.Id}", recipe);
 });
 
 app.MapDelete("/recipes/{id}", [Authorize] async (Guid id, HttpContext context, IAntiforgery forgeryService) =>
