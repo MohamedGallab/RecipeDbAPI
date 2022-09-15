@@ -15,8 +15,18 @@ public class _0001_CreateTables : AutoReversingMigration
 			.WithColumn("Name").AsString().PrimaryKey();
 
 		Create.Table("RecipeCategoryDictionary")
-			.WithColumn("RecipeId").AsGuid().PrimaryKey().ForeignKey("Recipe", "Id")
-			.WithColumn("CategoryName").AsString().PrimaryKey().ForeignKey("Category", "Name");
+			.WithColumn("RecipeId").AsGuid().PrimaryKey()
+			.WithColumn("CategoryName").AsString().PrimaryKey();
+
+		Create.ForeignKey()
+			.FromTable("RecipeCategoryDictionary").ForeignColumn("RecipeId")
+			.ToTable("Recipe").PrimaryColumn("Id")
+			.OnDeleteOrUpdate(System.Data.Rule.Cascade);
+
+		Create.ForeignKey()
+			.FromTable("RecipeCategoryDictionary").ForeignColumn("CategoryName")
+			.ToTable("Category").PrimaryColumn("Name")
+			.OnDeleteOrUpdate(System.Data.Rule.Cascade);
 
 		Create.Table("User")
 			.WithColumn("Username").AsString().PrimaryKey()
@@ -26,11 +36,21 @@ public class _0001_CreateTables : AutoReversingMigration
 		Create.Table("Instruction")
 			.WithColumn("Id").AsGuid().PrimaryKey()
 			.WithColumn("Text").AsString().NotNullable()
-			.WithColumn("RecipeId").AsGuid().ForeignKey("Recipe", "Id");
+			.WithColumn("RecipeId").AsGuid();
+
+		Create.ForeignKey()
+			.FromTable("Instruction").ForeignColumn("RecipeId")
+			.ToTable("Recipe").PrimaryColumn("Id")
+			.OnDeleteOrUpdate(System.Data.Rule.Cascade);
 
 		Create.Table("Ingredient")
 			.WithColumn("Id").AsGuid().PrimaryKey()
 			.WithColumn("Name").AsString().NotNullable()
-			.WithColumn("RecipeId").AsGuid().ForeignKey("Recipe", "Id");
+			.WithColumn("RecipeId").AsGuid();
+
+		Create.ForeignKey()
+			.FromTable("Ingredient").ForeignColumn("RecipeId")
+			.ToTable("Recipe").PrimaryColumn("Id")
+			.OnDeleteOrUpdate(System.Data.Rule.Cascade);
 	}
 }
