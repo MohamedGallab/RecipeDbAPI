@@ -95,6 +95,35 @@ string GenerateRefreshToken()
 	}
 }
 
+Recipe RecipeEntityToModel(RecipeEntity recipeEntity)
+{
+	Recipe recipe = new Recipe
+	{
+		Id = recipeEntity.Id,
+		Title = recipeEntity.Title,
+		Categories = new(),
+		Ingredients = new(),
+		Instructions = new()
+	};
+
+	foreach (var instruction in recipeEntity.Instructions)
+	{
+		recipe.Instructions.Add(instruction.Text);
+	}
+
+	foreach (var ingredient in recipeEntity.Ingredients)
+	{
+		recipe.Instructions.Add(ingredient.Name);
+	}
+
+	foreach (var category in recipeEntity.RecipeCategoryDictionaries)
+	{
+		recipe.Instructions.Add(category.CategoryName);
+	}
+
+	return recipe;
+}
+
 JWToken? GenerateJWT(User user)
 {
 	var tokenHandler = new JwtSecurityTokenHandler();
@@ -310,13 +339,20 @@ app.MapPost("/recipes", [Authorize] async (Recipe recipe, HttpContext context, I
 app.MapDelete("/recipes/{id}", [Authorize] async (Guid id, HttpContext context, IAntiforgery forgeryService) =>
 {
 	await forgeryService.ValidateRequestAsync(context);
-	if (recipesList.Find(recipe => recipe.Id == id) is Recipe recipe)
+
+	using (DataAccessAdapter adapter = new())
 	{
-		recipesList.Remove(recipe);
-		await SaveAsync();
-		return Results.Ok(recipe);
+		try
+		{
+			var recipeEntity = new RecipeEntity(id);
+			adapter.DeleteEntity(recipeEntity);
+			return Results.Ok();
+		}
+		catch (Exception)
+		{
+			return Results.NotFound();
+		}
 	}
-	return Results.NotFound();
 });
 
 app.MapPut("/recipes/{id}", [Authorize] async (Recipe editedRecipe, HttpContext context, IAntiforgery forgeryService) =>
@@ -356,7 +392,7 @@ app.MapPost("/categories", [Authorize] async (string category, HttpContext conte
 		using (DataAccessAdapter adapter = new())
 		{
 			var result = adapter.SaveEntity(categoryEntity);
-			if(result)
+			if (result)
 			{
 				return Results.Created($"/categories/{category}", category);
 			}
