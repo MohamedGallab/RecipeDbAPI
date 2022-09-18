@@ -20,20 +20,18 @@ namespace RecipeORM.EntityClasses
 {
 	// __LLBLGENPRO_USER_CODE_REGION_START AdditionalNamespaces
 	// __LLBLGENPRO_USER_CODE_REGION_END
-
 	/// <summary>Entity class which represents the entity 'Recipe'.<br/><br/></summary>
 	[Serializable]
 	public partial class RecipeEntity : CommonEntityBase
 		// __LLBLGENPRO_USER_CODE_REGION_START AdditionalInterfaces
-		// __LLBLGENPRO_USER_CODE_REGION_END
-	
+		// __LLBLGENPRO_USER_CODE_REGION_END	
 	{
 		private EntityCollection<IngredientEntity> _ingredients;
 		private EntityCollection<InstructionEntity> _instructions;
 		private EntityCollection<RecipeCategoryDictionaryEntity> _recipeCategoryDictionaries;
+
 		// __LLBLGENPRO_USER_CODE_REGION_START PrivateMembers
 		// __LLBLGENPRO_USER_CODE_REGION_END
-
 		private static RecipeEntityStaticMetaData _staticMetaData = new RecipeEntityStaticMetaData();
 		private static RecipeRelations _relationsFactory = new RecipeRelations();
 
@@ -130,7 +128,6 @@ namespace RecipeORM.EntityClasses
 			PerformDependencyInjection();
 			// __LLBLGENPRO_USER_CODE_REGION_START InitClassMembers
 			// __LLBLGENPRO_USER_CODE_REGION_END
-
 			OnInitClassMembersComplete();
 		}
 
@@ -145,7 +142,6 @@ namespace RecipeORM.EntityClasses
 			InitClassMembers();
 			// __LLBLGENPRO_USER_CODE_REGION_START InitClassEmpty
 			// __LLBLGENPRO_USER_CODE_REGION_END
-
 
 			OnInitialized();
 		}
@@ -173,6 +169,14 @@ namespace RecipeORM.EntityClasses
 			set	{ SetValue((int)RecipeFieldIndex.Id, value); }
 		}
 
+		/// <summary>The IsActive property of the Entity Recipe<br/><br/></summary>
+		/// <remarks>Mapped on  table field: "Recipe"."is_active".<br/>Table field type characteristics (type, precision, scale, length): Bit, 0, 0, 0.<br/>Table field behavior characteristics (is nullable, is PK, is identity): false, false, false</remarks>
+		public virtual System.Boolean IsActive
+		{
+			get { return (System.Boolean)GetValue((int)RecipeFieldIndex.IsActive, true); }
+			set	{ SetValue((int)RecipeFieldIndex.IsActive, value); }
+		}
+
 		/// <summary>The Title property of the Entity Recipe<br/><br/></summary>
 		/// <remarks>Mapped on  table field: "Recipe"."Title".<br/>Table field type characteristics (type, precision, scale, length): NVarChar, 0, 0, 255.<br/>Table field behavior characteristics (is nullable, is PK, is identity): false, false, false</remarks>
 		public virtual System.String Title
@@ -192,9 +196,9 @@ namespace RecipeORM.EntityClasses
 		/// <summary>Gets the EntityCollection with the related entities of type 'RecipeCategoryDictionaryEntity' which are related to this entity via a relation of type '1:n'. If the EntityCollection hasn't been fetched yet, the collection returned will be empty.<br/><br/></summary>
 		[TypeContainedAttribute(typeof(RecipeCategoryDictionaryEntity))]
 		public virtual EntityCollection<RecipeCategoryDictionaryEntity> RecipeCategoryDictionaries { get { return GetOrCreateEntityCollection<RecipeCategoryDictionaryEntity, RecipeCategoryDictionaryEntityFactory>("Recipe", true, false, ref _recipeCategoryDictionaries); } }
+
 		// __LLBLGENPRO_USER_CODE_REGION_START CustomEntityCode
 		// __LLBLGENPRO_USER_CODE_REGION_END
-
 
 	}
 }
@@ -205,6 +209,8 @@ namespace RecipeORM
 	{
 		///<summary>Id. </summary>
 		Id,
+		///<summary>IsActive. </summary>
+		IsActive,
 		///<summary>Title. </summary>
 		Title,
 		/// <summary></summary>

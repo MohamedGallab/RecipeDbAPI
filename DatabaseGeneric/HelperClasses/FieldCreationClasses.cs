@@ -13,6 +13,8 @@ namespace RecipeORM.HelperClasses
 	/// <summary>Field Creation Class for entity CategoryEntity</summary>
 	public partial class CategoryFields
 	{
+		/// <summary>Creates a new CategoryEntity.IsActive field instance</summary>
+		public static EntityField2 IsActive { get { return ModelInfoProviderSingleton.GetInstance().CreateField2(CategoryFieldIndex.IsActive); }}
 		/// <summary>Creates a new CategoryEntity.Name field instance</summary>
 		public static EntityField2 Name { get { return ModelInfoProviderSingleton.GetInstance().CreateField2(CategoryFieldIndex.Name); }}
 	}
@@ -44,6 +46,8 @@ namespace RecipeORM.HelperClasses
 	{
 		/// <summary>Creates a new RecipeEntity.Id field instance</summary>
 		public static EntityField2 Id { get { return ModelInfoProviderSingleton.GetInstance().CreateField2(RecipeFieldIndex.Id); }}
+		/// <summary>Creates a new RecipeEntity.IsActive field instance</summary>
+		public static EntityField2 IsActive { get { return ModelInfoProviderSingleton.GetInstance().CreateField2(RecipeFieldIndex.IsActive); }}
 		/// <summary>Creates a new RecipeEntity.Title field instance</summary>
 		public static EntityField2 Title { get { return ModelInfoProviderSingleton.GetInstance().CreateField2(RecipeFieldIndex.Title); }}
 	}

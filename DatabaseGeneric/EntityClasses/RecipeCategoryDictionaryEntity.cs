@@ -20,19 +20,17 @@ namespace RecipeORM.EntityClasses
 {
 	// __LLBLGENPRO_USER_CODE_REGION_START AdditionalNamespaces
 	// __LLBLGENPRO_USER_CODE_REGION_END
-
 	/// <summary>Entity class which represents the entity 'RecipeCategoryDictionary'.<br/><br/></summary>
 	[Serializable]
 	public partial class RecipeCategoryDictionaryEntity : CommonEntityBase
 		// __LLBLGENPRO_USER_CODE_REGION_START AdditionalInterfaces
-		// __LLBLGENPRO_USER_CODE_REGION_END
-	
+		// __LLBLGENPRO_USER_CODE_REGION_END	
 	{
 		private CategoryEntity _category;
 		private RecipeEntity _recipe;
+
 		// __LLBLGENPRO_USER_CODE_REGION_START PrivateMembers
 		// __LLBLGENPRO_USER_CODE_REGION_END
-
 		private static RecipeCategoryDictionaryEntityStaticMetaData _staticMetaData = new RecipeCategoryDictionaryEntityStaticMetaData();
 		private static RecipeCategoryDictionaryRelations _relationsFactory = new RecipeCategoryDictionaryRelations();
 
@@ -125,7 +123,6 @@ namespace RecipeORM.EntityClasses
 			PerformDependencyInjection();
 			// __LLBLGENPRO_USER_CODE_REGION_START InitClassMembers
 			// __LLBLGENPRO_USER_CODE_REGION_END
-
 			OnInitClassMembersComplete();
 		}
 
@@ -140,7 +137,6 @@ namespace RecipeORM.EntityClasses
 			InitClassMembers();
 			// __LLBLGENPRO_USER_CODE_REGION_START InitClassEmpty
 			// __LLBLGENPRO_USER_CODE_REGION_END
-
 
 			OnInitialized();
 		}
@@ -187,9 +183,9 @@ namespace RecipeORM.EntityClasses
 			get { return _recipe; }
 			set { SetSingleRelatedEntityNavigator(value, "Recipe"); }
 		}
+
 		// __LLBLGENPRO_USER_CODE_REGION_START CustomEntityCode
 		// __LLBLGENPRO_USER_CODE_REGION_END
-
 
 	}
 }

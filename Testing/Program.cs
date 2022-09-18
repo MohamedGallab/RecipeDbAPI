@@ -80,7 +80,9 @@ bool DeleteCategory(String categoryName)
 	var category = new CategoryEntity(categoryName);
 	using (DataAccessAdapter adapter = new())
 	{
-		return adapter.DeleteEntity(category);
+		adapter.FetchEntity(category);
+		category.IsActive = false;
+		return adapter.SaveEntity(category);
 	}
 }
 
@@ -158,9 +160,14 @@ bool AddRecipe(Recipe recipe)
 }
 
 // gotta delete old stuff to update
-void GetRecipes()
+Recipe GetRecipe(Guid id)
 {
-
+	var recipeEntity = new RecipeEntity(id);
+	using (DataAccessAdapter adapter = new())
+	{
+		if (adapter.FetchEntity(recipeEntity))
+			return RecipeEntityToModel(recipeEntity);
+	}
 }
 
 bool EditRecipe(Recipe recipe)
@@ -236,7 +243,13 @@ bool DeleteRecipe(Recipe recipe)
 		try
 		{
 			var recipeEntity = new RecipeEntity(recipe.Id);
-			adapter.DeleteEntity(recipeEntity);
+			adapter.FetchEntity(recipeEntity);
+			adapter.FetchEntityCollection(recipeEntity.Ingredients, recipeEntity.GetRelationInfoIngredients());
+			adapter.DeleteEntityCollection(recipeEntity.Ingredients);
+			adapter.FetchEntityCollection(recipeEntity.Instructions, recipeEntity.GetRelationInfoInstructions());
+			adapter.DeleteEntityCollection(recipeEntity.Instructions);
+			adapter.FetchEntityCollection(recipeEntity.RecipeCategoryDictionaries, recipeEntity.GetRelationInfoRecipeCategoryDictionaries());
+			adapter.DeleteEntityCollection(recipeEntity.RecipeCategoryDictionaries);
 			return true;
 		}
 		catch (Exception)
@@ -257,8 +270,10 @@ bool DeleteRecipe(Recipe recipe)
 
 DeleteRecipe(new Recipe
 {
-	Id = Guid.Parse("58760a43-3eb1-4b98-931d-9b4363ee3a65")
+	Id = Guid.Parse("61ca9e0e-7531-4c4a-9a7e-bc52e94c2536")
 });
+
+//UpdateCategory("Breakfastsss","breakfast");
 
 //DeleteCategory("breakfast");
 

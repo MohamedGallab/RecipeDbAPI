@@ -20,18 +20,16 @@ namespace RecipeORM.EntityClasses
 {
 	// __LLBLGENPRO_USER_CODE_REGION_START AdditionalNamespaces
 	// __LLBLGENPRO_USER_CODE_REGION_END
-
 	/// <summary>Entity class which represents the entity 'Category'.<br/><br/></summary>
 	[Serializable]
 	public partial class CategoryEntity : CommonEntityBase
 		// __LLBLGENPRO_USER_CODE_REGION_START AdditionalInterfaces
-		// __LLBLGENPRO_USER_CODE_REGION_END
-	
+		// __LLBLGENPRO_USER_CODE_REGION_END	
 	{
 		private EntityCollection<RecipeCategoryDictionaryEntity> _recipeCategoryDictionaries;
+
 		// __LLBLGENPRO_USER_CODE_REGION_START PrivateMembers
 		// __LLBLGENPRO_USER_CODE_REGION_END
-
 		private static CategoryEntityStaticMetaData _staticMetaData = new CategoryEntityStaticMetaData();
 		private static CategoryRelations _relationsFactory = new CategoryRelations();
 
@@ -114,7 +112,6 @@ namespace RecipeORM.EntityClasses
 			PerformDependencyInjection();
 			// __LLBLGENPRO_USER_CODE_REGION_START InitClassMembers
 			// __LLBLGENPRO_USER_CODE_REGION_END
-
 			OnInitClassMembersComplete();
 		}
 
@@ -130,7 +127,6 @@ namespace RecipeORM.EntityClasses
 			// __LLBLGENPRO_USER_CODE_REGION_START InitClassEmpty
 			// __LLBLGENPRO_USER_CODE_REGION_END
 
-
 			OnInitialized();
 		}
 
@@ -140,6 +136,14 @@ namespace RecipeORM.EntityClasses
 		/// <summary>Creates a new PrefetchPathElement2 object which contains all the information to prefetch the related entities of type 'RecipeCategoryDictionary' for this entity.</summary>
 		/// <returns>Ready to use IPrefetchPathElement2 implementation.</returns>
 		public static IPrefetchPathElement2 PrefetchPathRecipeCategoryDictionaries { get { return _staticMetaData.GetPrefetchPathElement("RecipeCategoryDictionaries", CommonEntityBase.CreateEntityCollection<RecipeCategoryDictionaryEntity>()); } }
+
+		/// <summary>The IsActive property of the Entity Category<br/><br/></summary>
+		/// <remarks>Mapped on  table field: "Category"."is_active".<br/>Table field type characteristics (type, precision, scale, length): Bit, 0, 0, 0.<br/>Table field behavior characteristics (is nullable, is PK, is identity): false, false, false</remarks>
+		public virtual System.Boolean IsActive
+		{
+			get { return (System.Boolean)GetValue((int)CategoryFieldIndex.IsActive, true); }
+			set	{ SetValue((int)CategoryFieldIndex.IsActive, value); }
+		}
 
 		/// <summary>The Name property of the Entity Category<br/><br/></summary>
 		/// <remarks>Mapped on  table field: "Category"."Name".<br/>Table field type characteristics (type, precision, scale, length): NVarChar, 0, 0, 255.<br/>Table field behavior characteristics (is nullable, is PK, is identity): false, true, false</remarks>
@@ -152,9 +156,9 @@ namespace RecipeORM.EntityClasses
 		/// <summary>Gets the EntityCollection with the related entities of type 'RecipeCategoryDictionaryEntity' which are related to this entity via a relation of type '1:n'. If the EntityCollection hasn't been fetched yet, the collection returned will be empty.<br/><br/></summary>
 		[TypeContainedAttribute(typeof(RecipeCategoryDictionaryEntity))]
 		public virtual EntityCollection<RecipeCategoryDictionaryEntity> RecipeCategoryDictionaries { get { return GetOrCreateEntityCollection<RecipeCategoryDictionaryEntity, RecipeCategoryDictionaryEntityFactory>("Category", true, false, ref _recipeCategoryDictionaries); } }
+
 		// __LLBLGENPRO_USER_CODE_REGION_START CustomEntityCode
 		// __LLBLGENPRO_USER_CODE_REGION_END
-
 
 	}
 }
@@ -163,6 +167,8 @@ namespace RecipeORM
 {
 	public enum CategoryFieldIndex
 	{
+		///<summary>IsActive. </summary>
+		IsActive,
 		///<summary>Name. </summary>
 		Name,
 		/// <summary></summary>

@@ -54,6 +54,7 @@ namespace RecipeORM.HelperClasses
 		private void InitCategoryEntityInfo()
 		{
 			this.AddFieldIndexEnumForElementName(typeof(CategoryFieldIndex), "CategoryEntity");
+			this.AddElementFieldInfo("CategoryEntity", "IsActive", typeof(System.Boolean), false, false, false, false,  (int)CategoryFieldIndex.IsActive, 0, 0, 0);
 			this.AddElementFieldInfo("CategoryEntity", "Name", typeof(System.String), true, false, false, false,  (int)CategoryFieldIndex.Name, 255, 0, 0);
 		}
 
@@ -80,6 +81,7 @@ namespace RecipeORM.HelperClasses
 		{
 			this.AddFieldIndexEnumForElementName(typeof(RecipeFieldIndex), "RecipeEntity");
 			this.AddElementFieldInfo("RecipeEntity", "Id", typeof(System.Guid), true, false, false, false,  (int)RecipeFieldIndex.Id, 0, 0, 0);
+			this.AddElementFieldInfo("RecipeEntity", "IsActive", typeof(System.Boolean), false, false, false, false,  (int)RecipeFieldIndex.IsActive, 0, 0, 0);
 			this.AddElementFieldInfo("RecipeEntity", "Title", typeof(System.String), false, false, false, false,  (int)RecipeFieldIndex.Title, 255, 0, 0);
 		}
 

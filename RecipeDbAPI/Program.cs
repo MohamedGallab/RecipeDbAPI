@@ -141,86 +141,71 @@ JWToken? GenerateJWT(User user)
 	return new JWToken { Token = tokenHandler.WriteToken(token), RefreshToken = GenerateRefreshToken() };
 }
 
-JWToken? Authenticate(User user)
-{
-	PasswordHasher<string> pw = new();
-
-	if (!usersList.Any(x => x.Name == user.Name && pw.VerifyHashedPassword(user.Name, x.Password, user.Password) == PasswordVerificationResult.Success))
-	{
-		return null;
-	}
-
-	// Else we generate JSON Web Token
-	return GenerateJWT(user);
-}
-
-JWToken? Refresh(JWToken jwt)
-{
-	User user;
-
-	if (usersList.Find(x => x.RefreshToken == jwt.RefreshToken) is User tempUser)
-		user = tempUser;
-	else
-		return null;
-
-	// Else we generate JSON Web Token
-	var tokenHandler = new JwtSecurityTokenHandler();
-	var tokenKey = Encoding.UTF8.GetBytes(app.Configuration["JWT:Key"]);
-	var tokenDescriptor = new SecurityTokenDescriptor
-	{
-		Subject = new ClaimsIdentity(new Claim[]
-		{
-				new Claim(ClaimTypes.Name, user.Name)
-		}),
-		Expires = DateTime.UtcNow.AddMinutes(10),
-		SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256Signature)
-	};
-	var token = tokenHandler.CreateToken(tokenDescriptor);
-	return new JWToken { Token = tokenHandler.WriteToken(token), RefreshToken = GenerateRefreshToken() };
-}
-
 // user enpoint
 app.MapPost("/register", async (HttpContext context, IAntiforgery forgeryService, User user) =>
 {
-	if (user.Name == String.Empty || user.Password == String.Empty || usersList.Exists(oldUser => oldUser.Name == user.Name))
+	using (DataAccessAdapter adapter = new())
 	{
-		return Results.BadRequest();
+		var userEntity = new UserEntity
+		{
+			Username = user.Name,
+			Password = user.Password
+		};
+
+		if (user.Name == String.Empty || user.Password == String.Empty || adapter.FetchEntity(userEntity))
+		{
+			return Results.BadRequest();
+		}
+
+		PasswordHasher<string> pw = new();
+		user.Password = pw.HashPassword(user.Name, user.Password);
+
+		var token = GenerateJWT(user);
+
+		if (token == null)
+			return Results.Unauthorized();
+
+		userEntity.RefreshToken = token.RefreshToken;
+
+		var result = adapter.SaveEntity(userEntity);
+		if (result)
+		{
+			return Results.Created($"/categories/{user.Name}", user);
+		}
+		else
+		{
+			return Results.BadRequest();
+		}
 	}
-
-	PasswordHasher<string> pw = new();
-	user.Password = pw.HashPassword(user.Name, user.Password);
-	usersList.Add(user);
-
-	var token = GenerateJWT(user);
-
-	if (token == null)
-	{
-		return Results.Unauthorized();
-	}
-
-	user.RefreshToken = token.RefreshToken;
-	await SaveAsync();
-	return Results.Created($"/users/{user.Name}", token);
 });
 
 app.MapPost("/login", async (HttpContext context, IAntiforgery forgeryService, User user) =>
 {
-	var token = Authenticate(user);
-
-	if (token == null)
+	using (DataAccessAdapter adapter = new())
 	{
-		return Results.Unauthorized();
+		var userEntity = new UserEntity
+		{
+			Username = user.Name,
+			Password = user.Password
+		};
+
+		PasswordHasher<string> pw = new();
+		if (adapter.FetchEntity(userEntity) && pw.VerifyHashedPassword(user.Name, userEntity.Password, user.Password) == PasswordVerificationResult.Success)
+		{
+			return Results.Unauthorized();
+		}
+		var token = GenerateJWT(user);
+
+		if (token == null)
+		{
+			return Results.Unauthorized();
+		}
+
+		userEntity.RefreshToken = token.RefreshToken;
+
+		adapter.SaveEntity(userEntity);
+		return Results.Ok(token);
 	}
-
-	PasswordHasher<string> pw = new();
-
-	if (usersList.Find(x => x.Name == user.Name && pw.VerifyHashedPassword(user.Name, x.Password, user.Password) == PasswordVerificationResult.Success) is User tempUser)
-	{
-		tempUser.RefreshToken = token.RefreshToken;
-		await SaveAsync();
-	}
-
-	return Results.Ok(token);
 });
 
 app.MapGet("/antiforgery/token", [Authorize] (IAntiforgery forgeryService, HttpContext context) =>
@@ -232,39 +217,65 @@ app.MapGet("/antiforgery/token", [Authorize] (IAntiforgery forgeryService, HttpC
 
 app.MapPost("/refresh", async (JWToken jwt) =>
 {
-	var token = Refresh(jwt);
-
-	if (token == null)
+	using (DataAccessAdapter adapter = new())
 	{
-		return Results.Unauthorized();
-	}
+		var userEntity = new UserEntity
+		{
+			RefreshToken = jwt.RefreshToken
+		};
 
-	if (usersList.Find(x => x.RefreshToken == jwt.RefreshToken) is User tempUser)
-	{
-		usersList.Remove(tempUser);
-		tempUser.RefreshToken = token.RefreshToken;
-		usersList.Add(tempUser);
-		await SaveAsync();
-	}
+		if(adapter.FetchEntityUsingUniqueConstraint(userEntity, null))
+		{
+			var token = GenerateJWT(new User
+			{
+				Name = userEntity.Username,
+				Password = userEntity.Password
+			});
 
-	return Results.Ok(token);
+			if (token == null)
+				return Results.Unauthorized();
+
+			userEntity.RefreshToken = token.RefreshToken;
+			adapter.SaveEntity(userEntity);
+			return Results.Ok(token);
+		}
+	}
+	return Results.Unauthorized();
 });
 
 // recipe endpoints
 app.MapGet("/recipes", [Authorize] async (HttpContext context, IAntiforgery forgeryService) =>
 {
 	await forgeryService.ValidateRequestAsync(context);
-	return Results.Ok(recipesList);
+
+	var recipes = new EntityCollection<RecipeEntity>();
+	using (var adapter = new DataAccessAdapter())
+	{
+		adapter.FetchEntityCollection(recipes, null);
+	}
+
+	var recipeList = new List<Recipe>();
+
+	foreach (var recipe in recipes)
+	{
+		recipeList.Add(RecipeEntityToModel(recipe));
+	}
+
+	return Results.Ok(recipeList);
 });
 
 app.MapGet("/recipes/{id}", [Authorize] async (Guid id, HttpContext context, IAntiforgery forgeryService) =>
 {
 	await forgeryService.ValidateRequestAsync(context);
-	if (recipesList.Find(recipe => recipe.Id == id) is Recipe recipe)
+
+	var recipeEntity = new RecipeEntity(id);
+	using (DataAccessAdapter adapter = new())
 	{
-		return Results.Ok(recipe);
+		if (adapter.FetchEntity(recipeEntity))
+			return Results.Ok(RecipeEntityToModel(recipeEntity));
 	}
 	return Results.NotFound();
+
 });
 
 app.MapPost("/recipes", [Authorize] async (Recipe recipe, HttpContext context, IAntiforgery forgeryService) =>
@@ -279,8 +290,6 @@ app.MapPost("/recipes", [Authorize] async (Recipe recipe, HttpContext context, I
 			var recipeEntity = new RecipeEntity();
 			recipeEntity.Id = Guid.NewGuid();
 			recipeEntity.Title = recipe.Title;
-			if (!adapter.SaveEntity(recipeEntity))
-				throw new Exception();
 
 			// create instruction entities
 			foreach (var instruction in recipe.Instructions)
@@ -291,8 +300,6 @@ app.MapPost("/recipes", [Authorize] async (Recipe recipe, HttpContext context, I
 					Text = instruction,
 					Recipe = recipeEntity
 				};
-				if (!adapter.SaveEntity(instructionEntity))
-					throw new Exception();
 			}
 
 			// create ingredient entities
@@ -304,11 +311,9 @@ app.MapPost("/recipes", [Authorize] async (Recipe recipe, HttpContext context, I
 					Name = ingredient,
 					Recipe = recipeEntity
 				};
-				if (!adapter.SaveEntity(ingredientEntity))
-					throw new Exception();
 			}
 
-			// create category entities
+			// create recipeCategoryDictionary entities
 			foreach (var category in recipe.Categories)
 			{
 				var categoryEntity = new CategoryEntity(category);
@@ -320,10 +325,11 @@ app.MapPost("/recipes", [Authorize] async (Recipe recipe, HttpContext context, I
 					Recipe = recipeEntity,
 					Category = categoryEntity
 				};
-				if (!adapter.SaveEntity(recipeCategoryDictionaryEntity))
-					throw new Exception();
 			}
 
+			// Save all entities recursively
+			if (!adapter.SaveEntity(recipeEntity))
+				throw new Exception();
 			adapter.Commit();
 			return Results.Created($"/recipes/{recipe.Id}", recipe);
 		}
@@ -342,11 +348,15 @@ app.MapDelete("/recipes/{id}", [Authorize] async (Guid id, HttpContext context, 
 
 	using (DataAccessAdapter adapter = new())
 	{
+		var recipeEntity = new RecipeEntity(id);
 		try
 		{
-			var recipeEntity = new RecipeEntity(id);
-			adapter.DeleteEntity(recipeEntity);
-			return Results.Ok();
+			if (!adapter.FetchEntity(recipeEntity))
+				return Results.NotFound();
+			recipeEntity.IsActive = false;
+			if (!adapter.SaveEntity(recipeEntity))
+				throw new Exception("Could Not Save");
+			return Results.Ok(RecipeEntityToModel(recipeEntity));
 		}
 		catch (Exception)
 		{
@@ -358,15 +368,73 @@ app.MapDelete("/recipes/{id}", [Authorize] async (Guid id, HttpContext context, 
 app.MapPut("/recipes/{id}", [Authorize] async (Recipe editedRecipe, HttpContext context, IAntiforgery forgeryService) =>
 {
 	await forgeryService.ValidateRequestAsync(context);
-	if (recipesList.Find(recipe => recipe.Id == editedRecipe.Id) is Recipe recipe)
+
+	using (DataAccessAdapter adapter = new())
 	{
-		recipesList.Remove(recipe);
-		recipesList.Add(editedRecipe);
-		recipesList = recipesList.OrderBy(o => o.Title).ToList();
-		await SaveAsync();
-		return Results.NoContent();
+		adapter.StartTransaction(IsolationLevel.ReadCommitted, "Insert Recipe");
+		try
+		{
+			var recipeEntity = new RecipeEntity(editedRecipe.Id);
+			if (!adapter.FetchEntity(recipeEntity))
+				return Results.NotFound();
+
+			// delete old recipe related entities
+			adapter.FetchEntityCollection(recipeEntity.Ingredients, recipeEntity.GetRelationInfoIngredients());
+			adapter.DeleteEntityCollection(recipeEntity.Ingredients);
+			adapter.FetchEntityCollection(recipeEntity.Instructions, recipeEntity.GetRelationInfoInstructions());
+			adapter.DeleteEntityCollection(recipeEntity.Instructions);
+			adapter.FetchEntityCollection(recipeEntity.RecipeCategoryDictionaries, recipeEntity.GetRelationInfoRecipeCategoryDictionaries());
+			adapter.DeleteEntityCollection(recipeEntity.RecipeCategoryDictionaries);
+
+			// create instruction entities
+			foreach (var instruction in editedRecipe.Instructions)
+			{
+				var instructionEntity = new InstructionEntity
+				{
+					Id = Guid.NewGuid(),
+					Text = instruction,
+					Recipe = recipeEntity
+				};
+			}
+
+			// create ingredient entities
+			foreach (var ingredient in editedRecipe.Ingredients)
+			{
+				var ingredientEntity = new IngredientEntity
+				{
+					Id = Guid.NewGuid(),
+					Name = ingredient,
+					Recipe = recipeEntity
+				};
+			}
+
+			// create recipeCategoryDictionary entities
+			foreach (var category in editedRecipe.Categories)
+			{
+				var categoryEntity = new CategoryEntity(category);
+				if (!adapter.FetchEntity(categoryEntity))
+					throw new Exception();
+
+				var recipeCategoryDictionaryEntity = new RecipeCategoryDictionaryEntity()
+				{
+					Recipe = recipeEntity,
+					Category = categoryEntity
+				};
+			}
+
+			// Save all entities recursively
+			if (!adapter.SaveEntity(recipeEntity))
+				throw new Exception();
+			adapter.Commit();
+			return Results.Created($"/recipes/{editedRecipe.Id}", editedRecipe);
+		}
+		catch (Exception)
+		{
+			// Rollback if anything goes wrong
+			adapter.Rollback();
+			return Results.BadRequest();
+		}
 	}
-	return Results.NotFound();
 });
 
 // category endpoints
@@ -422,15 +490,12 @@ app.MapDelete("/categories/{category}", [Authorize] async (string category, Http
 		var categoryEntity = new CategoryEntity(category);
 		using (DataAccessAdapter adapter = new())
 		{
-			var result = adapter.DeleteEntity(categoryEntity);
-			if (result)
-			{
-				return Results.Ok(category);
-			}
-			else
-			{
+			if (!adapter.FetchEntity(categoryEntity))
 				return Results.NotFound();
-			}
+			categoryEntity.IsActive = false;
+			if (!adapter.SaveEntity(categoryEntity))
+				throw new Exception("Could Not Save");
+			return Results.Ok(category);
 		}
 	}
 	catch (Exception)
@@ -452,18 +517,13 @@ app.MapPut("/categories/{category}", [Authorize] async (string category, string 
 		var categoryEntity = new CategoryEntity(category);
 		using (DataAccessAdapter adapter = new())
 		{
-			adapter.FetchEntity(categoryEntity);
-			categoryEntity.Name = editedCategory;
-			var result = adapter.SaveEntity(categoryEntity);
-			if (result)
-			{
-				return Results.NoContent();
-			}
-			else
-			{
+			if (!adapter.FetchEntity(categoryEntity))
 				return Results.NotFound();
-			}
+			categoryEntity.Name = editedCategory;
+			if (!adapter.SaveEntity(categoryEntity))
+				throw new Exception("Failed to save");
 		}
+		return Results.NoContent();
 	}
 	catch (Exception)
 	{

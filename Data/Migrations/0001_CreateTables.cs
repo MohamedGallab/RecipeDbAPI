@@ -9,10 +9,12 @@ public class _0001_CreateTables : AutoReversingMigration
 	{
 		Create.Table("Recipe")
 			.WithColumn("Id").AsGuid().PrimaryKey()
-			.WithColumn("Title").AsString().NotNullable();
+			.WithColumn("Title").AsString().NotNullable()
+			.WithColumn("is_active").AsBoolean().WithDefaultValue(true);
 
 		Create.Table("Category")
-			.WithColumn("Name").AsString().PrimaryKey();
+			.WithColumn("Name").AsString().PrimaryKey()
+			.WithColumn("is_active").AsBoolean().WithDefaultValue(true);
 
 		Create.Table("RecipeCategoryDictionary")
 			.WithColumn("RecipeId").AsGuid().PrimaryKey()
@@ -31,7 +33,7 @@ public class _0001_CreateTables : AutoReversingMigration
 		Create.Table("User")
 			.WithColumn("Username").AsString().PrimaryKey()
 			.WithColumn("Password").AsString().NotNullable()
-			.WithColumn("RefreshToken").AsString();
+			.WithColumn("RefreshToken").AsString().Unique();
 
 		Create.Table("Instruction")
 			.WithColumn("Id").AsGuid().PrimaryKey()

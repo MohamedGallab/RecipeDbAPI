@@ -47,8 +47,9 @@ namespace RecipeORM.DatabaseSpecific
 		/// <summary>Inits CategoryEntity's mappings</summary>
 		private void InitCategoryEntityMappings()
 		{
-			this.AddElementMapping("CategoryEntity", @"RecipeDB", @"dbo", "Category", 1, 0);
-			this.AddElementFieldMapping("CategoryEntity", "Name", "Name", false, "NVarChar", 255, 0, 0, false, "", null, typeof(System.String), 0);
+			this.AddElementMapping("CategoryEntity", @"RecipeDB", @"dbo", "Category", 2, 0);
+			this.AddElementFieldMapping("CategoryEntity", "IsActive", "is_active", false, "Bit", 0, 0, 0, false, "", null, typeof(System.Boolean), 0);
+			this.AddElementFieldMapping("CategoryEntity", "Name", "Name", false, "NVarChar", 255, 0, 0, false, "", null, typeof(System.String), 1);
 		}
 
 		/// <summary>Inits IngredientEntity's mappings</summary>
@@ -72,9 +73,10 @@ namespace RecipeORM.DatabaseSpecific
 		/// <summary>Inits RecipeEntity's mappings</summary>
 		private void InitRecipeEntityMappings()
 		{
-			this.AddElementMapping("RecipeEntity", @"RecipeDB", @"dbo", "Recipe", 2, 0);
+			this.AddElementMapping("RecipeEntity", @"RecipeDB", @"dbo", "Recipe", 3, 0);
 			this.AddElementFieldMapping("RecipeEntity", "Id", "Id", false, "UniqueIdentifier", 0, 0, 0, false, "", null, typeof(System.Guid), 0);
-			this.AddElementFieldMapping("RecipeEntity", "Title", "Title", false, "NVarChar", 255, 0, 0, false, "", null, typeof(System.String), 1);
+			this.AddElementFieldMapping("RecipeEntity", "IsActive", "is_active", false, "Bit", 0, 0, 0, false, "", null, typeof(System.Boolean), 1);
+			this.AddElementFieldMapping("RecipeEntity", "Title", "Title", false, "NVarChar", 255, 0, 0, false, "", null, typeof(System.String), 2);
 		}
 
 		/// <summary>Inits RecipeCategoryDictionaryEntity's mappings</summary>
