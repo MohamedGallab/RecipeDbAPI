@@ -13,6 +13,9 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Data;
+using SD.LLBLGen.Pro.DQE.SqlServer;
+using SD.LLBLGen.Pro.ORMSupportClasses;
+using RecipeORM;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -94,7 +97,14 @@ string GenerateRefreshToken()
 		return Convert.ToBase64String(randomNumber);
 	}
 }
+// configure LLBLGen pro
+RuntimeConfiguration.AddConnectionString(app.Configuration["Key"],
+									app.Configuration["ConnectionString"]);
 
+RuntimeConfiguration.ConfigureDQE<SQLServerDQEConfiguration>(
+				c => c.AddDbProviderFactory(typeof(System.Data.SqlClient.SqlClientFactory)));
+
+// methods
 Recipe RecipeEntityToModel(RecipeEntity recipeEntity)
 {
 	Recipe recipe = new Recipe
@@ -113,12 +123,12 @@ Recipe RecipeEntityToModel(RecipeEntity recipeEntity)
 
 	foreach (var ingredient in recipeEntity.Ingredients)
 	{
-		recipe.Instructions.Add(ingredient.Name);
+		recipe.Ingredients.Add(ingredient.Name);
 	}
 
 	foreach (var category in recipeEntity.RecipeCategoryDictionaries)
 	{
-		recipe.Instructions.Add(category.CategoryName);
+		recipe.Categories.Add(category.CategoryName);
 	}
 
 	return recipe;
@@ -158,7 +168,7 @@ app.MapPost("/register", async (HttpContext context, IAntiforgery forgeryService
 		}
 
 		PasswordHasher<string> pw = new();
-		user.Password = pw.HashPassword(user.Name, user.Password);
+		userEntity.Password = pw.HashPassword(user.Name, user.Password);
 
 		var token = GenerateJWT(user);
 
@@ -170,7 +180,7 @@ app.MapPost("/register", async (HttpContext context, IAntiforgery forgeryService
 		var result = adapter.SaveEntity(userEntity);
 		if (result)
 		{
-			return Results.Created($"/categories/{user.Name}", user);
+			return Results.Ok(token);
 		}
 		else
 		{
@@ -192,19 +202,19 @@ app.MapPost("/login", async (HttpContext context, IAntiforgery forgeryService, U
 		PasswordHasher<string> pw = new();
 		if (adapter.FetchEntity(userEntity) && pw.VerifyHashedPassword(user.Name, userEntity.Password, user.Password) == PasswordVerificationResult.Success)
 		{
-			return Results.Unauthorized();
+			var token = GenerateJWT(user);
+
+			if (token == null)
+			{
+				return Results.Unauthorized();
+			}
+
+			userEntity.RefreshToken = token.RefreshToken;
+
+			adapter.SaveEntity(userEntity);
+			return Results.Ok(token);
 		}
-		var token = GenerateJWT(user);
-
-		if (token == null)
-		{
-			return Results.Unauthorized();
-		}
-
-		userEntity.RefreshToken = token.RefreshToken;
-
-		adapter.SaveEntity(userEntity);
-		return Results.Ok(token);
+		return Results.Unauthorized();
 	}
 });
 
@@ -224,7 +234,7 @@ app.MapPost("/refresh", async (JWToken jwt) =>
 			RefreshToken = jwt.RefreshToken
 		};
 
-		if(adapter.FetchEntityUsingUniqueConstraint(userEntity, null))
+		if (adapter.FetchEntityUsingUniqueConstraint(userEntity, null))
 		{
 			var token = GenerateJWT(new User
 			{
@@ -249,9 +259,18 @@ app.MapGet("/recipes", [Authorize] async (HttpContext context, IAntiforgery forg
 	await forgeryService.ValidateRequestAsync(context);
 
 	var recipes = new EntityCollection<RecipeEntity>();
+	var prefetchPath = new PrefetchPath2(EntityType.RecipeEntity)
+	{
+		RecipeEntity.PrefetchPathInstructions,
+		RecipeEntity.PrefetchPathIngredients,
+		RecipeEntity.PrefetchPathRecipeCategoryDictionaries
+	};
+	RelationPredicateBucket filter = new();
+	filter.PredicateExpression.Add(RecipeFields.IsActive == true);
+
 	using (var adapter = new DataAccessAdapter())
 	{
-		adapter.FetchEntityCollection(recipes, null);
+		adapter.FetchEntityCollection(recipes, filter, prefetchPath);
 	}
 
 	var recipeList = new List<Recipe>();
@@ -271,7 +290,7 @@ app.MapGet("/recipes/{id}", [Authorize] async (Guid id, HttpContext context, IAn
 	var recipeEntity = new RecipeEntity(id);
 	using (DataAccessAdapter adapter = new())
 	{
-		if (adapter.FetchEntity(recipeEntity))
+		if (adapter.FetchEntity(recipeEntity) && recipeEntity.IsActive)
 			return Results.Ok(RecipeEntityToModel(recipeEntity));
 	}
 	return Results.NotFound();
@@ -375,7 +394,7 @@ app.MapPut("/recipes/{id}", [Authorize] async (Recipe editedRecipe, HttpContext 
 		try
 		{
 			var recipeEntity = new RecipeEntity(editedRecipe.Id);
-			if (!adapter.FetchEntity(recipeEntity))
+			if (!adapter.FetchEntity(recipeEntity) || !recipeEntity.IsActive)
 				return Results.NotFound();
 
 			// delete old recipe related entities
@@ -447,7 +466,7 @@ app.MapGet("/categories", [Authorize] async (HttpContext context, IAntiforgery f
 	{
 		adapter.FetchEntityCollection(categories, null);
 	}
-	return Results.Ok(categories.Select(x => x.Name).ToList());
+	return Results.Ok(categories.Where(x => x.IsActive).Select(x => x.Name).ToList());
 });
 
 app.MapPost("/categories", [Authorize] async (string category, HttpContext context, IAntiforgery forgeryService) =>
@@ -495,6 +514,11 @@ app.MapDelete("/categories/{category}", [Authorize] async (string category, Http
 			categoryEntity.IsActive = false;
 			if (!adapter.SaveEntity(categoryEntity))
 				throw new Exception("Could Not Save");
+
+			EntityCollection<RecipeCategoryDictionaryEntity> recipeCategoryDictionaryEntities = new();
+			RelationPredicateBucket filter = new RelationPredicateBucket(RecipeCategoryDictionaryFields.CategoryName == category);
+			adapter.FetchEntityCollection(recipeCategoryDictionaryEntities, filter);
+			adapter.DeleteEntityCollection(recipeCategoryDictionaryEntities);
 			return Results.Ok(category);
 		}
 	}
@@ -517,7 +541,7 @@ app.MapPut("/categories/{category}", [Authorize] async (string category, string 
 		var categoryEntity = new CategoryEntity(category);
 		using (DataAccessAdapter adapter = new())
 		{
-			if (!adapter.FetchEntity(categoryEntity))
+			if (!adapter.FetchEntity(categoryEntity) || !categoryEntity.IsActive)
 				return Results.NotFound();
 			categoryEntity.Name = editedCategory;
 			if (!adapter.SaveEntity(categoryEntity))
