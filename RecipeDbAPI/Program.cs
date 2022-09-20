@@ -16,6 +16,9 @@ using System.Data;
 using SD.LLBLGen.Pro.DQE.SqlServer;
 using SD.LLBLGen.Pro.ORMSupportClasses;
 using RecipeORM;
+using SD.LLBLGen.Pro.QuerySpec.Adapter;
+using RecipeORM.FactoryClasses;
+using SD.LLBLGen.Pro.QuerySpec;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -88,6 +91,14 @@ app.UseCors("Cors Policy");
 app.UseAuthentication();
 app.UseAuthorization();
 
+// configure LLBLGen pro
+RuntimeConfiguration.AddConnectionString(app.Configuration["Key"],
+									app.Configuration["ConnectionString"]);
+
+RuntimeConfiguration.ConfigureDQE<SQLServerDQEConfiguration>(
+				c => c.AddDbProviderFactory(typeof(System.Data.SqlClient.SqlClientFactory)));
+
+// methods
 string GenerateRefreshToken()
 {
 	var randomNumber = new byte[32];
@@ -97,14 +108,7 @@ string GenerateRefreshToken()
 		return Convert.ToBase64String(randomNumber);
 	}
 }
-// configure LLBLGen pro
-RuntimeConfiguration.AddConnectionString(app.Configuration["Key"],
-									app.Configuration["ConnectionString"]);
 
-RuntimeConfiguration.ConfigureDQE<SQLServerDQEConfiguration>(
-				c => c.AddDbProviderFactory(typeof(System.Data.SqlClient.SqlClientFactory)));
-
-// methods
 Recipe RecipeEntityToModel(RecipeEntity recipeEntity)
 {
 	Recipe recipe = new Recipe
@@ -144,12 +148,15 @@ JWToken? GenerateJWT(User user)
 		{
 				new Claim(ClaimTypes.Name, user.Name)
 		}),
-		Expires = DateTime.UtcNow.AddMinutes(10),
+		Expires = DateTime.UtcNow.AddMinutes(1),
 		SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256Signature)
 	};
 	var token = tokenHandler.CreateToken(tokenDescriptor);
 	return new JWToken { Token = tokenHandler.WriteToken(token), RefreshToken = GenerateRefreshToken() };
 }
+
+// variables
+QueryFactory qf = new();
 
 // user enpoint
 app.MapPost("/register", async (HttpContext context, IAntiforgery forgeryService, User user) =>
@@ -162,7 +169,9 @@ app.MapPost("/register", async (HttpContext context, IAntiforgery forgeryService
 			Password = user.Password
 		};
 
-		if (user.Name == String.Empty || user.Password == String.Empty || adapter.FetchEntity(userEntity))
+		var q = qf.User.Where(UserFields.Username == user.Name);
+
+		if (user.Name == String.Empty || user.Password == String.Empty || await adapter.FetchFirstAsync(q) != null)
 		{
 			return Results.BadRequest();
 		}
@@ -177,7 +186,7 @@ app.MapPost("/register", async (HttpContext context, IAntiforgery forgeryService
 
 		userEntity.RefreshToken = token.RefreshToken;
 
-		var result = adapter.SaveEntity(userEntity);
+		var result = await adapter.SaveEntityAsync(userEntity);
 		if (result)
 		{
 			return Results.Ok(token);
@@ -200,7 +209,10 @@ app.MapPost("/login", async (HttpContext context, IAntiforgery forgeryService, U
 		};
 
 		PasswordHasher<string> pw = new();
-		if (adapter.FetchEntity(userEntity) && pw.VerifyHashedPassword(user.Name, userEntity.Password, user.Password) == PasswordVerificationResult.Success)
+
+		var query = qf.User.Where(UserFields.Username == user.Name);
+		userEntity = await adapter.FetchFirstAsync(query);
+		if (userEntity != null && pw.VerifyHashedPassword(user.Name, userEntity.Password, user.Password) == PasswordVerificationResult.Success)
 		{
 			var token = GenerateJWT(user);
 
@@ -211,7 +223,7 @@ app.MapPost("/login", async (HttpContext context, IAntiforgery forgeryService, U
 
 			userEntity.RefreshToken = token.RefreshToken;
 
-			adapter.SaveEntity(userEntity);
+			await adapter.SaveEntityAsync(userEntity);
 			return Results.Ok(token);
 		}
 		return Results.Unauthorized();
@@ -246,7 +258,7 @@ app.MapPost("/refresh", async (JWToken jwt) =>
 				return Results.Unauthorized();
 
 			userEntity.RefreshToken = token.RefreshToken;
-			adapter.SaveEntity(userEntity);
+			await adapter.SaveEntityAsync(userEntity);
 			return Results.Ok(token);
 		}
 	}
@@ -265,12 +277,16 @@ app.MapGet("/recipes", [Authorize] async (HttpContext context, IAntiforgery forg
 		RecipeEntity.PrefetchPathIngredients,
 		RecipeEntity.PrefetchPathRecipeCategoryDictionaries
 	};
-	RelationPredicateBucket filter = new();
-	filter.PredicateExpression.Add(RecipeFields.IsActive == true);
 
 	using (var adapter = new DataAccessAdapter())
 	{
-		adapter.FetchEntityCollection(recipes, filter, prefetchPath);
+		var qp = new QueryParameters()
+		{
+			CollectionToFetch = recipes,
+			FilterToUse = RecipeFields.IsActive == true,
+			PrefetchPathToUse = prefetchPath
+		};
+		await adapter.FetchEntityCollectionAsync(qp, CancellationToken.None);
 	}
 
 	var recipeList = new List<Recipe>();
@@ -290,7 +306,9 @@ app.MapGet("/recipes/{id}", [Authorize] async (Guid id, HttpContext context, IAn
 	var recipeEntity = new RecipeEntity(id);
 	using (DataAccessAdapter adapter = new())
 	{
-		if (adapter.FetchEntity(recipeEntity) && recipeEntity.IsActive)
+		var query = qf.Recipe.Where(RecipeFields.Id == id);
+
+		if (await adapter.FetchFirstAsync(query) != null && recipeEntity.IsActive)
 			return Results.Ok(RecipeEntityToModel(recipeEntity));
 	}
 	return Results.NotFound();
@@ -336,7 +354,9 @@ app.MapPost("/recipes", [Authorize] async (Recipe recipe, HttpContext context, I
 			foreach (var category in recipe.Categories)
 			{
 				var categoryEntity = new CategoryEntity(category);
-				if (!adapter.FetchEntity(categoryEntity))
+				var q = qf.Category.Where(CategoryFields.Name == category);
+				categoryEntity = await adapter.FetchFirstAsync(q);
+				if (categoryEntity == null)
 					throw new Exception();
 
 				var recipeCategoryDictionaryEntity = new RecipeCategoryDictionaryEntity()
@@ -347,7 +367,7 @@ app.MapPost("/recipes", [Authorize] async (Recipe recipe, HttpContext context, I
 			}
 
 			// Save all entities recursively
-			if (!adapter.SaveEntity(recipeEntity))
+			if (!await adapter.SaveEntityAsync(recipeEntity))
 				throw new Exception();
 			adapter.Commit();
 			return Results.Created($"/recipes/{recipe.Id}", recipe);
@@ -367,13 +387,15 @@ app.MapDelete("/recipes/{id}", [Authorize] async (Guid id, HttpContext context, 
 
 	using (DataAccessAdapter adapter = new())
 	{
-		var recipeEntity = new RecipeEntity(id);
+		RecipeEntity recipeEntity;
 		try
 		{
-			if (!adapter.FetchEntity(recipeEntity))
+			var q = qf.Recipe.Where(RecipeFields.Id == id);
+			recipeEntity = await adapter.FetchFirstAsync(q);
+			if (recipeEntity == null)
 				return Results.NotFound();
 			recipeEntity.IsActive = false;
-			if (!adapter.SaveEntity(recipeEntity))
+			if (!await adapter.SaveEntityAsync(recipeEntity))
 				throw new Exception("Could Not Save");
 			return Results.Ok(RecipeEntityToModel(recipeEntity));
 		}
@@ -393,17 +415,34 @@ app.MapPut("/recipes/{id}", [Authorize] async (Recipe editedRecipe, HttpContext 
 		adapter.StartTransaction(IsolationLevel.ReadCommitted, "Insert Recipe");
 		try
 		{
-			var recipeEntity = new RecipeEntity(editedRecipe.Id);
-			if (!adapter.FetchEntity(recipeEntity) || !recipeEntity.IsActive)
+			RecipeEntity recipeEntity;
+			var q = qf.Recipe.Where(RecipeFields.Id == editedRecipe.Id);
+			recipeEntity = await adapter.FetchFirstAsync(q);
+			if (recipeEntity == null || !recipeEntity.IsActive)
 				return Results.NotFound();
 
 			// delete old recipe related entities
-			adapter.FetchEntityCollection(recipeEntity.Ingredients, recipeEntity.GetRelationInfoIngredients());
-			adapter.DeleteEntityCollection(recipeEntity.Ingredients);
-			adapter.FetchEntityCollection(recipeEntity.Instructions, recipeEntity.GetRelationInfoInstructions());
-			adapter.DeleteEntityCollection(recipeEntity.Instructions);
-			adapter.FetchEntityCollection(recipeEntity.RecipeCategoryDictionaries, recipeEntity.GetRelationInfoRecipeCategoryDictionaries());
-			adapter.DeleteEntityCollection(recipeEntity.RecipeCategoryDictionaries);
+			await adapter.FetchEntityCollectionAsync(new()
+			{
+				CollectionToFetch = recipeEntity.Ingredients,
+				FilterToUse = IngredientFields.RecipeId == editedRecipe.Id
+			},
+			CancellationToken.None);
+			await adapter.DeleteEntityCollectionAsync(recipeEntity.Ingredients);
+			await adapter.FetchEntityCollectionAsync(new()
+			{
+				CollectionToFetch = recipeEntity.Instructions,
+				FilterToUse = InstructionFields.RecipeId == editedRecipe.Id
+			},
+			CancellationToken.None);
+			await adapter.DeleteEntityCollectionAsync(recipeEntity.Instructions);
+			await adapter.FetchEntityCollectionAsync(new()
+			{
+				CollectionToFetch = recipeEntity.RecipeCategoryDictionaries,
+				FilterToUse = RecipeCategoryDictionaryFields.RecipeId == editedRecipe.Id
+			},
+			CancellationToken.None);
+			await adapter.DeleteEntityCollectionAsync(recipeEntity.RecipeCategoryDictionaries);
 
 			// create instruction entities
 			foreach (var instruction in editedRecipe.Instructions)
@@ -431,7 +470,9 @@ app.MapPut("/recipes/{id}", [Authorize] async (Recipe editedRecipe, HttpContext 
 			foreach (var category in editedRecipe.Categories)
 			{
 				var categoryEntity = new CategoryEntity(category);
-				if (!adapter.FetchEntity(categoryEntity))
+				var q2 = qf.Category.Where(CategoryFields.Name == category);
+				categoryEntity = await adapter.FetchFirstAsync(q2);
+				if (categoryEntity == null)
 					throw new Exception();
 
 				var recipeCategoryDictionaryEntity = new RecipeCategoryDictionaryEntity()
@@ -442,7 +483,7 @@ app.MapPut("/recipes/{id}", [Authorize] async (Recipe editedRecipe, HttpContext 
 			}
 
 			// Save all entities recursively
-			if (!adapter.SaveEntity(recipeEntity))
+			if (!await adapter.SaveEntityAsync(recipeEntity))
 				throw new Exception();
 			adapter.Commit();
 			return Results.Created($"/recipes/{editedRecipe.Id}", editedRecipe);
@@ -464,7 +505,11 @@ app.MapGet("/categories", [Authorize] async (HttpContext context, IAntiforgery f
 	var categories = new EntityCollection<CategoryEntity>();
 	using (var adapter = new DataAccessAdapter())
 	{
-		adapter.FetchEntityCollection(categories, null);
+		var qp = new QueryParameters
+		{
+			CollectionToFetch = categories
+		};
+		await adapter.FetchEntityCollectionAsync(qp, CancellationToken.None);
 	}
 	return Results.Ok(categories.Where(x => x.IsActive).Select(x => x.Name).ToList());
 });
@@ -473,20 +518,23 @@ app.MapPost("/categories", [Authorize] async (string category, HttpContext conte
 {
 	await forgeryService.ValidateRequestAsync(context);
 
-	var categoryEntity = new CategoryEntity(category);
+	CategoryEntity categoryEntity;
 	try
 	{
 		using (DataAccessAdapter adapter = new())
 		{
-			var result = adapter.SaveEntity(categoryEntity);
-			if (result)
-			{
-				return Results.Created($"/categories/{category}", category);
-			}
+			var q = qf.Category.Where(CategoryFields.Name == category);
+			categoryEntity = await adapter.FetchFirstAsync(q);
+
+			if (categoryEntity != null)
+				categoryEntity.IsActive = true;
 			else
-			{
+				categoryEntity = new CategoryEntity(category);
+
+			if (await adapter.SaveEntityAsync(categoryEntity))
+				return Results.Created($"/categories/{category}", category);
+			else
 				return Results.BadRequest();
-			}
 		}
 	}
 	catch (Exception)
@@ -509,16 +557,22 @@ app.MapDelete("/categories/{category}", [Authorize] async (string category, Http
 		var categoryEntity = new CategoryEntity(category);
 		using (DataAccessAdapter adapter = new())
 		{
-			if (!adapter.FetchEntity(categoryEntity))
+			var q = qf.Category.Where(CategoryFields.Name == category);
+			categoryEntity = await adapter.FetchFirstAsync(q);
+			if (categoryEntity == null)
 				return Results.NotFound();
 			categoryEntity.IsActive = false;
-			if (!adapter.SaveEntity(categoryEntity))
+			if (!await adapter.SaveEntityAsync(categoryEntity))
 				throw new Exception("Could Not Save");
 
 			EntityCollection<RecipeCategoryDictionaryEntity> recipeCategoryDictionaryEntities = new();
-			RelationPredicateBucket filter = new RelationPredicateBucket(RecipeCategoryDictionaryFields.CategoryName == category);
-			adapter.FetchEntityCollection(recipeCategoryDictionaryEntities, filter);
-			adapter.DeleteEntityCollection(recipeCategoryDictionaryEntities);
+			var qp = new QueryParameters()
+			{
+				CollectionToFetch = recipeCategoryDictionaryEntities,
+				FilterToUse = RecipeCategoryDictionaryFields.CategoryName == category
+			};
+			await adapter.FetchEntityCollectionAsync(qp, CancellationToken.None);
+			await adapter.DeleteEntityCollectionAsync(recipeCategoryDictionaryEntities);
 			return Results.Ok(category);
 		}
 	}
@@ -538,13 +592,15 @@ app.MapPut("/categories/{category}", [Authorize] async (string category, string 
 
 	try
 	{
-		var categoryEntity = new CategoryEntity(category);
+		CategoryEntity categoryEntity;
 		using (DataAccessAdapter adapter = new())
 		{
-			if (!adapter.FetchEntity(categoryEntity) || !categoryEntity.IsActive)
+			var q = qf.Category.Where(CategoryFields.Name == category);
+			categoryEntity = await adapter.FetchFirstAsync(q);
+			if (categoryEntity == null || !categoryEntity.IsActive)
 				return Results.NotFound();
 			categoryEntity.Name = editedCategory;
-			if (!adapter.SaveEntity(categoryEntity))
+			if (!await adapter.SaveEntityAsync(categoryEntity))
 				throw new Exception("Failed to save");
 		}
 		return Results.NoContent();
