@@ -268,7 +268,7 @@ app.MapPost("/refresh", async (JWToken jwt) =>
 // recipe endpoints
 app.MapGet("/recipes", [Authorize] async (HttpContext context, IAntiforgery forgeryService) =>
 {
-	await forgeryService.ValidateRequestAsync(context);
+	////await forgeryService.ValidateRequestAsync(context);
 
 	var recipes = new EntityCollection<RecipeEntity>();
 	var prefetchPath = new PrefetchPath2(EntityType.RecipeEntity)
@@ -301,7 +301,7 @@ app.MapGet("/recipes", [Authorize] async (HttpContext context, IAntiforgery forg
 
 app.MapGet("/recipes/{id}", [Authorize] async (Guid id, HttpContext context, IAntiforgery forgeryService) =>
 {
-	await forgeryService.ValidateRequestAsync(context);
+	////await forgeryService.ValidateRequestAsync(context);
 
 	var recipeEntity = new RecipeEntity(id);
 	using (DataAccessAdapter adapter = new())
@@ -317,7 +317,7 @@ app.MapGet("/recipes/{id}", [Authorize] async (Guid id, HttpContext context, IAn
 
 app.MapPost("/recipes", [Authorize] async (Recipe recipe, HttpContext context, IAntiforgery forgeryService) =>
 {
-	await forgeryService.ValidateRequestAsync(context);
+	////await forgeryService.ValidateRequestAsync(context);
 
 	using (DataAccessAdapter adapter = new())
 	{
@@ -383,7 +383,7 @@ app.MapPost("/recipes", [Authorize] async (Recipe recipe, HttpContext context, I
 
 app.MapDelete("/recipes/{id}", [Authorize] async (Guid id, HttpContext context, IAntiforgery forgeryService) =>
 {
-	await forgeryService.ValidateRequestAsync(context);
+	////await forgeryService.ValidateRequestAsync(context);
 
 	using (DataAccessAdapter adapter = new())
 	{
@@ -408,7 +408,7 @@ app.MapDelete("/recipes/{id}", [Authorize] async (Guid id, HttpContext context, 
 
 app.MapPut("/recipes/{id}", [Authorize] async (Recipe editedRecipe, HttpContext context, IAntiforgery forgeryService) =>
 {
-	await forgeryService.ValidateRequestAsync(context);
+	////await forgeryService.ValidateRequestAsync(context);
 
 	using (DataAccessAdapter adapter = new())
 	{
@@ -500,7 +500,7 @@ app.MapPut("/recipes/{id}", [Authorize] async (Recipe editedRecipe, HttpContext 
 // category endpoints
 app.MapGet("/categories", [Authorize] async (HttpContext context, IAntiforgery forgeryService) =>
 {
-	await forgeryService.ValidateRequestAsync(context);
+	//await forgeryService.ValidateRequestAsync(context);
 
 	var categories = new EntityCollection<CategoryEntity>();
 	using (var adapter = new DataAccessAdapter())
@@ -516,7 +516,7 @@ app.MapGet("/categories", [Authorize] async (HttpContext context, IAntiforgery f
 
 app.MapPost("/categories", [Authorize] async (string category, HttpContext context, IAntiforgery forgeryService) =>
 {
-	await forgeryService.ValidateRequestAsync(context);
+	//await forgeryService.ValidateRequestAsync(context);
 
 	CategoryEntity categoryEntity;
 	try
@@ -545,7 +545,7 @@ app.MapPost("/categories", [Authorize] async (string category, HttpContext conte
 
 app.MapDelete("/categories/{category}", [Authorize] async (string category, HttpContext context, IAntiforgery forgeryService) =>
 {
-	await forgeryService.ValidateRequestAsync(context);
+	//await forgeryService.ValidateRequestAsync(context);
 
 	if (category == String.Empty)
 	{
@@ -584,7 +584,7 @@ app.MapDelete("/categories/{category}", [Authorize] async (string category, Http
 
 app.MapPut("/categories/{category}", [Authorize] async (string category, string editedCategory, HttpContext context, IAntiforgery forgeryService) =>
 {
-	await forgeryService.ValidateRequestAsync(context);
+	//await forgeryService.ValidateRequestAsync(context);
 	if (editedCategory == String.Empty)
 	{
 		return Results.BadRequest();
